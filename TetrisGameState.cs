@@ -152,13 +152,35 @@ namespace XnaProjectTest
             return SetCurrentPiece(nextPiece, false);
         }
 
+        public TetrisGameState MoveLinesUp(int count, int spaceLocation)
+        {
+            var grid = (Color[,])Grid.Clone();
+
+            for (int l = 0; l < 20 - count; l++)
+            {
+                for (int c = 0; c < 10; c++)
+                    grid[l, c] = grid[l + count, c];
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                for (int c = 0; c < 10; c++)
+                    grid[20 - 1 - i, c] = c == spaceLocation ? Color.Transparent : Color.Gray;
+            }
+
+            if(ValidPosition(CurrentPiece, grid))
+                return new TetrisGameState(Rows, Points, CurrentPiece, NextPiece, grid);
+
+            return SolidifyCurrentPiece(grid);
+        }
+
         TetrisGameState SetCurrentPiece(PieceInstance currentPiece, bool autoSolidify)
         {
             if (ValidPosition(currentPiece, Grid))
                 return new TetrisGameState(Rows, Points, currentPiece, NextPiece, Grid);
 
             if (autoSolidify)
-                return SolidifyCurrentPiece();
+                return SolidifyCurrentPiece(Grid);
 
             return this;
         }
@@ -181,9 +203,9 @@ namespace XnaProjectTest
             return true;
         }
 
-        TetrisGameState SolidifyCurrentPiece()
+        TetrisGameState SolidifyCurrentPiece(Color[,] grid)
         {
-            var grid = (Color[,])Grid.Clone();
+            //var grid = (Color[,])Grid.Clone();
             for (int l = 0; l < 4; l++)
             {
                 for (int c = 0; c < 4; c++)

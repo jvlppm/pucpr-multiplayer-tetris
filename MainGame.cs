@@ -18,8 +18,7 @@ namespace XnaProjectTest
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        TetrisGameComponent Player1Board;
-        TetrisGameComponent Player2Board;
+        List<TetrisGameComponent> PlayerBoards;
 
         public MainGame()
         {
@@ -36,10 +35,32 @@ namespace XnaProjectTest
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            Components.Add(Player1Board = new TetrisGameComponent(this, new PlayerInput(Keys.D, Keys.A, Keys.S, Keys.E, Keys.Q)) { Location = new Point(0, 0) });
-            Components.Add(Player2Board = new TetrisGameComponent(this, new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.Up, Keys.Enter)) { Location = new Point(400, 0) });
+            PlayerBoards = new List<TetrisGameComponent>
+            {
+                new TetrisGameComponent(this, new PlayerInput(Keys.D, Keys.A, Keys.S, Keys.E, Keys.Q)) { Location = new Point(0, 0) },
+                new TetrisGameComponent(this, new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.Up, Keys.Enter)) { Location = new Point(400, 0) }
+            };
+
+            foreach (var board in PlayerBoards)
+            {
+                Components.Add(board);
+                board.LinesCleared += LinesCleared;
+            }
 
             base.Initialize();
+        }
+
+        void LinesCleared(object sender, LinesClearedEventArgs e)
+        {
+            var board = (TetrisGameComponent)sender;
+            if (e.Lines <= 1)
+                return;
+
+            foreach(var b in PlayerBoards)
+            {
+                if (b != board && !b.State.IsFinished)
+                    b.MoveLinesUp(e.Lines);
+            }
         }
 
         /// <summary>

@@ -17,7 +17,7 @@ namespace XnaProjectTest
             Lines = lines;
         }
     }
-    delegate void LinesClearedEventHandler(LinesClearedEventArgs e);
+    delegate void LinesClearedEventHandler(object sender, LinesClearedEventArgs e);
 
     class TetrisGameComponent : DrawableGameComponent
     {
@@ -30,7 +30,7 @@ namespace XnaProjectTest
         TimeSpan CurrentTickTime;
         TimeSpan KeyTickTime;
 
-        TetrisGameState State;
+        public TetrisGameState State;
         TimeSpan _gravityTickTimeCount;
 
         IPlayerInput PlayerInput;
@@ -192,7 +192,11 @@ namespace XnaProjectTest
         void FireLinesCleared(int lines)
         {
             if (LinesCleared != null)
-                LinesCleared(new LinesClearedEventArgs(lines));
+                LinesCleared(this, new LinesClearedEventArgs(lines));
+        }
+        public void MoveLinesUp(int count)
+        {
+            State = State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
         }
     }
 }
