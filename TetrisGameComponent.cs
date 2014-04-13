@@ -8,6 +8,17 @@ using System.Text;
 
 namespace XnaProjectTest
 {
+    class LinesClearedEventArgs : EventArgs
+    {
+        public readonly int Lines;
+
+        public LinesClearedEventArgs(int lines)
+        {
+            Lines = lines;
+        }
+    }
+    delegate void LinesClearedEventHandler(LinesClearedEventArgs e);
+
     class TetrisGameComponent : DrawableGameComponent
     {
         SpriteBatch _spriteBatch;
@@ -24,6 +35,8 @@ namespace XnaProjectTest
 
         IPlayerInput PlayerInput;
         Dictionary<InputButton, TimeSpan> PressTime;
+
+        public event LinesClearedEventHandler LinesCleared;
 
         public TetrisGameComponent(Game game, IPlayerInput playerInput)
             : base(game)
@@ -70,8 +83,13 @@ namespace XnaProjectTest
 
             if (_gravityTickTimeCount > CurrentTickTime || forceTick)
             {
+                var oldRows = State.Rows;
                 State = State.Tick();
                 UpdateLevel();
+                var clearedRows = State.Rows - oldRows;
+                if (clearedRows > 0)
+                    FireLinesCleared(clearedRows);
+
                 _gravityTickTimeCount -= CurrentTickTime;
                 if (_gravityTickTimeCount < TimeSpan.Zero)
                     _gravityTickTimeCount = TimeSpan.Zero;
@@ -169,6 +187,12 @@ namespace XnaProjectTest
                 return true;
             }
             return false;
+        }
+
+        void FireLinesCleared(int lines)
+        {
+            if (LinesCleared != null)
+                LinesCleared(new LinesClearedEventArgs(lines));
         }
     }
 }
