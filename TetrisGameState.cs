@@ -59,18 +59,18 @@ namespace XnaProjectTest
 
     struct Piece
     {
-        public Piece(bool[][,] shapes)
-            : this(shapes.OfType<bool[,]>().Select(b => new PieceShape(b)).ToArray())
+        public Piece(Color color, bool[][,] shapes)
+            : this(color, shapes.OfType<bool[,]>().Select(b => new PieceShape(b)).ToArray())
         {
         }
-        public Piece(params PieceShape[] shapes)
-            : this()
+        public Piece(Color color, params PieceShape[] shapes)
         {
+            Color = color;
             Shapes = shapes;
         }
 
-        public Color Color { get; private set; }
-        public PieceShape[] Shapes { get; private set; }
+        public readonly Color Color;
+        public readonly PieceShape[] Shapes;
     }
 
     struct PieceInstance

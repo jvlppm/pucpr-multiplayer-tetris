@@ -18,6 +18,8 @@ namespace XnaProjectTest
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        TetrisBoard Player1Board;
+        TetrisBoard Player2Board;
 
         public Game1()
         {
@@ -34,6 +36,7 @@ namespace XnaProjectTest
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            Components.Add(new TetrisBoard(this));
 
             base.Initialize();
         }

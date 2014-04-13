@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace XnaProjectTest
         static Random _rng;
         static Random RNG { get { return _rng ?? (_rng = new Random(Environment.TickCount)); } }
 
-        static readonly Piece I = new Piece(new[]{
+        static readonly Piece I = new Piece(Color.Cyan, new[]{
             new bool[4, 4]
             {
                 {false, false, true, false},
@@ -26,7 +27,7 @@ namespace XnaProjectTest
                 {false, false, false, false},
             }});
 
-        static readonly Piece J = new Piece(new[]{
+        static readonly Piece J = new Piece(Color.Orange, new[]{
             new bool[4, 4]
             {
                 {false, false, false, false},
@@ -57,7 +58,7 @@ namespace XnaProjectTest
             }
         });
 
-        static readonly Piece L = new Piece(new[]{
+        static readonly Piece L = new Piece(Color.LightBlue, new[]{
             new bool[4, 4]
             {
                 {false, false, false, false},
@@ -88,7 +89,7 @@ namespace XnaProjectTest
             }
         });
 
-        static readonly Piece O = new Piece(new[]{
+        static readonly Piece O = new Piece(Color.Yellow, new[]{
             new bool[4,4]
             {
                 {false, false, false, false},
@@ -98,7 +99,7 @@ namespace XnaProjectTest
             }
         });
 
-        static readonly Piece S = new Piece(new[]{
+        static readonly Piece S = new Piece(Color.Green, new[]{
             new bool[4, 4]
             {
                 {false, false, false, false},
@@ -115,7 +116,7 @@ namespace XnaProjectTest
             }
         });
 
-        static readonly Piece T = new Piece(new[]{
+        static readonly Piece T = new Piece(Color.DarkRed, new[]{
             new bool[4, 4]
             {
                 {false, false, false, false},
@@ -146,7 +147,7 @@ namespace XnaProjectTest
             }
         });
 
-        static readonly Piece Z = new Piece(new[]{
+        static readonly Piece Z = new Piece(Color.Pink, new[]{
             new bool[4, 4]
             {
                 {false, false, false, false},
