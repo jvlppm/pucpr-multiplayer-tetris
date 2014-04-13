@@ -10,14 +10,14 @@ namespace XnaProjectTest
 {
     class TetrisGameComponent : DrawableGameComponent
     {
-        Texture2D _squareSprite;
         SpriteBatch _spriteBatch;
+        Texture2D _squareSprite;
+        SpriteFont _statsFont;
 
         public Point Location;
 
         TimeSpan CurrentTickTime;
         TimeSpan KeyTickTime;
-        int Level;
 
         TetrisGameState State;
         TimeSpan _gravityTickTimeCount;
@@ -39,12 +39,16 @@ namespace XnaProjectTest
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _squareSprite = Game.Content.Load<Texture2D>("PieceBlock");
+            _statsFont = Game.Content.Load<SpriteFont>("DefaultFont");
             base.LoadContent();
         }
 
         #region Update
         public override void Update(GameTime gameTime)
         {
+            if (State.IsFinished)
+                return;
+
             _gravityTickTimeCount += gameTime.ElapsedGameTime;
 
             bool forceTick = false;
@@ -77,8 +81,7 @@ namespace XnaProjectTest
 
         void UpdateLevel()
         {
-            Level = State.Rows / 10;
-            var tick = Math.Pow((0.8 - ((Level - 1) * 0.007)), (Level - 1));
+            var tick = Math.Pow((0.8 - ((State.Level - 1) * 0.007)), (State.Level - 1));
             CurrentTickTime = TimeSpan.FromSeconds(tick);
             KeyTickTime = TimeSpan.FromSeconds(tick / 5);
         }
@@ -92,7 +95,7 @@ namespace XnaProjectTest
             DrawCurrentPiece();
             //DrawNextPiece();
             DrawGrid();
-            //DrawInfo();
+            DrawInfo();
 
             _spriteBatch.End();
 
@@ -134,6 +137,18 @@ namespace XnaProjectTest
                     }
                 }
             }
+        }
+
+        void DrawInfo()
+        {
+            _spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 200, Location.Y + 15), Color.Black);
+            _spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0"), new Vector2(Location.X + 200, Location.Y + 30), Color.Black);
+
+            _spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 200, Location.Y + 90), Color.Black);
+            _spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 280, Location.Y + 90), Color.Black);
+
+            _spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 200, Location.Y + 110), Color.Black);
+            _spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 280, Location.Y + 110), Color.Black);
         }
         #endregion
 

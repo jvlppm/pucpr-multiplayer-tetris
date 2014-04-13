@@ -104,7 +104,7 @@ namespace XnaProjectTest
             CurrentPiece = current;
             NextPiece = next;
             Grid = grid;
-            IsFinished = ValidPosition(current, grid);
+            IsFinished = !ValidPosition(current, grid);
         }
 
         public readonly int Level;
@@ -172,6 +172,8 @@ namespace XnaProjectTest
                 for (int c = 0; c < 4; c++)
                 {
                     int checkX = livePiece.Position.X + c - 2;
+                    if (checkY < 0)
+                        continue;
                     if (shape[l, c] && (checkX < 0 || checkX >= 10 || checkY < 0 || checkY >= 20 || grid[checkY, checkX] != Color.Transparent))
                         return false;
                 }

@@ -19,7 +19,7 @@ namespace XnaProjectTest
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         TetrisGameComponent Player1Board;
-        //TetrisGameComponent Player2Board;
+        TetrisGameComponent Player2Board;
 
         public MainGame()
         {
@@ -36,8 +36,8 @@ namespace XnaProjectTest
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            Components.Add(Player1Board = new TetrisGameComponent(this, new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.X, Keys.Z)) { Location = new Point(0, 0) });
-            //Components.Add(Player2Board = new TetrisGameComponent(this) { Location = new Point(200, 0) });
+            Components.Add(Player1Board = new TetrisGameComponent(this, new PlayerInput(Keys.D, Keys.A, Keys.S, Keys.E, Keys.Q)) { Location = new Point(0, 0) });
+            Components.Add(Player2Board = new TetrisGameComponent(this, new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.Up, Keys.Enter)) { Location = new Point(400, 0) });
 
             base.Initialize();
         }
