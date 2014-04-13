@@ -110,8 +110,12 @@ namespace XnaProjectTest
         {
             _spriteBatch.Begin();
 
+            var color = new Texture2D(GraphicsDevice, 1, 1);
+            color.SetData(new[] { Color.Gray });
+            _spriteBatch.Draw(color, new Rectangle(Location.X, Location.Y, 260, 240), Color.White);
+
             DrawCurrentPiece();
-            //DrawNextPiece();
+            DrawNextPiece();
             DrawGrid();
             DrawInfo();
 
@@ -159,14 +163,36 @@ namespace XnaProjectTest
 
         void DrawInfo()
         {
-            _spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 200, Location.Y + 15), Color.Black);
+            _spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 180, Location.Y + 10), Color.Black);
             _spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0"), new Vector2(Location.X + 200, Location.Y + 30), Color.Black);
 
-            _spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 200, Location.Y + 90), Color.Black);
-            _spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 280, Location.Y + 90), Color.Black);
+            _spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 180, Location.Y + 60), Color.Black);
+            _spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 200, Location.Y + 80), Color.Black);
 
-            _spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 200, Location.Y + 110), Color.Black);
-            _spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 280, Location.Y + 110), Color.Black);
+            _spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 180, Location.Y + 110), Color.Black);
+            _spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 200, Location.Y + 130), Color.Black);
+        }
+
+        void DrawNextPiece()
+        {
+            if (State.IsFinished)
+                return;
+
+            _spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 180, 155), Color.Black);
+            var nextPieceShape = State.NextPiece.Shapes[0].Data;
+
+            for (int l = 0; l < 4; l++)
+            {
+                for (int c = 0; c < 4; c++)
+                {
+                    if (nextPieceShape[l, c])
+                        _spriteBatch.Draw(_squareSprite,
+                            new Vector2(
+                                Location.X + 180 + (c) * _squareSprite.Width,
+                                Location.Y + 180 + (l) * _squareSprite.Height
+                            ), State.NextPiece.Color);
+                }
+            }
         }
         #endregion
 
