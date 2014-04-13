@@ -14,14 +14,14 @@ namespace XnaProjectTest
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    public class Game1 : Microsoft.Xna.Framework.Game
+    public class MainGame : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        TetrisBoard Player1Board;
-        TetrisBoard Player2Board;
+        TetrisGameComponent Player1Board;
+        //TetrisGameComponent Player2Board;
 
-        public Game1()
+        public MainGame()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -36,7 +36,8 @@ namespace XnaProjectTest
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            Components.Add(new TetrisBoard(this));
+            Components.Add(Player1Board = new TetrisGameComponent(this, new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.X, Keys.Z)) { Location = new Point(0, 0) });
+            //Components.Add(Player2Board = new TetrisGameComponent(this) { Location = new Point(200, 0) });
 
             base.Initialize();
         }

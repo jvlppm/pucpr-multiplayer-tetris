@@ -8,21 +8,29 @@ using System.Text;
 
 namespace XnaProjectTest
 {
-    class TetrisBoard : DrawableGameComponent
+    class TetrisGameComponent : DrawableGameComponent
     {
         Texture2D _squareSprite;
         SpriteBatch _spriteBatch;
 
-        Point Location;
+        public Point Location;
+
         TimeSpan CurrentTickTime;
+        TimeSpan KeyTickTime;
         int Level;
 
         TetrisGameState State;
-        TimeSpan _gravityTickTime;
+        TimeSpan _gravityTickTimeCount;
 
-        public TetrisBoard(Game game)
+        IPlayerInput PlayerInput;
+        Dictionary<InputButton, TimeSpan> PressTime;
+
+        public TetrisGameComponent(Game game, IPlayerInput playerInput)
             : base(game)
         {
+            PlayerInput = playerInput;
+            PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
+
             State = TetrisGameState.NewGameState();
             UpdateLevel();
         }
@@ -34,19 +42,49 @@ namespace XnaProjectTest
             base.LoadContent();
         }
 
+        #region Update
         public override void Update(GameTime gameTime)
         {
-            _gravityTickTime += gameTime.ElapsedGameTime;
+            _gravityTickTimeCount += gameTime.ElapsedGameTime;
 
-            if (_gravityTickTime > CurrentTickTime)
+            bool forceTick = false;
+
+            PlayerInput.Update(gameTime);
+            foreach (var button in PressTime.Keys.ToArray())
+                PressTime[button] += gameTime.ElapsedGameTime;
+
+            if (Press(InputButton.Left))
+                State = State.MoveLeft();
+            if (Press(InputButton.Right))
+                State = State.MoveRight();
+            if (Press(InputButton.Down))
+                forceTick = true;
+            if (Press(InputButton.RotateCW))
+                State = State.RotateClockwise();
+            if (Press(InputButton.RotateCCW))
+                State = State.RotateCounterClockwise();
+
+            if (_gravityTickTimeCount > CurrentTickTime || forceTick)
             {
                 State = State.Tick();
                 UpdateLevel();
-                _gravityTickTime -= CurrentTickTime;
+                _gravityTickTimeCount -= CurrentTickTime;
+                if (_gravityTickTimeCount < TimeSpan.Zero)
+                    _gravityTickTimeCount = TimeSpan.Zero;
             }
             base.Update(gameTime);
         }
 
+        void UpdateLevel()
+        {
+            Level = State.Rows / 10;
+            var tick = Math.Pow((0.8 - ((Level - 1) * 0.007)), (Level - 1));
+            CurrentTickTime = TimeSpan.FromSeconds(tick);
+            KeyTickTime = TimeSpan.FromSeconds(tick / 5);
+        }
+        #endregion
+
+        #region Draw
         public override void Draw(GameTime gameTime)
         {
             _spriteBatch.Begin();
@@ -97,12 +135,25 @@ namespace XnaProjectTest
                 }
             }
         }
+        #endregion
 
-        void UpdateLevel()
+        bool Press(InputButton button)
         {
-            Level = State.Rows / 10;
-            var tick = Math.Pow((0.8 - ((Level - 1) * 0.007)), (Level - 1));
-            CurrentTickTime = TimeSpan.FromSeconds(tick);
+            if (!PlayerInput.IsPressed(button))
+            {
+                PressTime[button] = TimeSpan.Zero;
+                return false;
+            }
+
+            if (!PlayerInput.WasPressed(button))
+                return true;
+
+            if (PressTime[button] > KeyTickTime)
+            {
+                PressTime[button] -= KeyTickTime;
+                return true;
+            }
+            return false;
         }
     }
 }
