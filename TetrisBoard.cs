@@ -14,15 +14,17 @@ namespace XnaProjectTest
         SpriteBatch _spriteBatch;
 
         Point Location;
+        TimeSpan CurrentTickTime;
+        int Level;
 
-
-        TetrisGameState State { get; set; }
-        //float _gravityTickTime;
+        TetrisGameState State;
+        TimeSpan _gravityTickTime;
 
         public TetrisBoard(Game game)
             : base(game)
         {
             State = TetrisGameState.NewGameState();
+            UpdateLevel();
         }
 
         protected override void LoadContent()
@@ -30,6 +32,19 @@ namespace XnaProjectTest
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             _squareSprite = Game.Content.Load<Texture2D>("PieceBlock");
             base.LoadContent();
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            _gravityTickTime += gameTime.ElapsedGameTime;
+
+            if (_gravityTickTime > CurrentTickTime)
+            {
+                State = State.Tick();
+                UpdateLevel();
+                _gravityTickTime -= CurrentTickTime;
+            }
+            base.Update(gameTime);
         }
 
         public override void Draw(GameTime gameTime)
@@ -81,6 +96,13 @@ namespace XnaProjectTest
                     }
                 }
             }
+        }
+
+        void UpdateLevel()
+        {
+            Level = State.Rows / 10;
+            var tick = Math.Pow((0.8 - ((Level - 1) * 0.007)), (Level - 1));
+            CurrentTickTime = TimeSpan.FromSeconds(tick);
         }
     }
 }
