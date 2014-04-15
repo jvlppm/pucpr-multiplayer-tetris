@@ -10,7 +10,7 @@ namespace Tetris.MultiPlayer.Components
 {
     class TetrisBoard
     {
-        Texture2D _squareSprite;
+        Texture2D _squareSprite, _boardBackground;
         SpriteFont _statsFont;
 
         public Point Location;
@@ -38,6 +38,7 @@ namespace Tetris.MultiPlayer.Components
         public void LoadContent(ContentManager content)
         {
             _squareSprite = content.Load<Texture2D>("PieceBlock");
+            _boardBackground = content.Load<Texture2D>("BoardBackground");
             _statsFont = content.Load<SpriteFont>("DefaultFont");
         }
 
@@ -92,17 +93,18 @@ namespace Tetris.MultiPlayer.Components
         #region Draw
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            //var color = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
-            //color.SetData(new[] { Color.Gray });
-            //_spriteBatch.Draw(color, new Rectangle(Location.X, Location.Y, 260, 240), Color.White);
+            spriteBatch.Draw(_boardBackground, new Vector2(Location.X, Location.Y), Color.White);
 
-            DrawCurrentPiece(spriteBatch);
+            var gridOffset = new Vector2(1, 1);
+
+            DrawCurrentPiece(spriteBatch, gridOffset);
+            DrawGrid(spriteBatch, gridOffset);
+
             DrawNextPiece(spriteBatch);
-            DrawGrid(spriteBatch);
             DrawInfo(spriteBatch);
         }
 
-        void DrawCurrentPiece(SpriteBatch spriteBatch)
+        void DrawCurrentPiece(SpriteBatch spriteBatch, Vector2 position)
         {
             var currentPiece = State.CurrentPiece.Shape.Data;
             var piecePos = State.CurrentPiece.Position;
@@ -114,14 +116,14 @@ namespace Tetris.MultiPlayer.Components
                     if (currentPiece[l, c])
                         spriteBatch.Draw(_squareSprite,
                             new Vector2(
-                                Location.X + (piecePos.X + c - 2) * _squareSprite.Width,
-                                Location.Y + (piecePos.Y + l - 1) * _squareSprite.Height
+                                Location.X + position.X + (piecePos.X + c - 2) * _squareSprite.Width,
+                                Location.Y + position.Y + (piecePos.Y + l - 1) * _squareSprite.Height
                             ), State.CurrentPiece.Piece.Color);
                 }
             }
         }
 
-        void DrawGrid(SpriteBatch spriteBatch)
+        void DrawGrid(SpriteBatch spriteBatch, Vector2 position)
         {
             for (int l = 0; l < 20; l++)
             {
@@ -131,8 +133,8 @@ namespace Tetris.MultiPlayer.Components
                     {
                         spriteBatch.Draw(_squareSprite,
                             new Vector2(
-                                    Location.X + c * _squareSprite.Width,
-                                    Location.Y + l * _squareSprite.Height
+                                    Location.X + position.X + c * _squareSprite.Width,
+                                    Location.Y + position.Y + l * _squareSprite.Height
                                 ), State.Grid[l, c]);
                     }
                 }
@@ -141,14 +143,14 @@ namespace Tetris.MultiPlayer.Components
 
         void DrawInfo(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 180, Location.Y + 10), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0"), new Vector2(Location.X + 200, Location.Y + 30), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 165, Location.Y + 10), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0").PadLeft(13), new Vector2(Location.X + 165, Location.Y + 30), Color.Black);
             
-            spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 180, Location.Y + 60), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 200, Location.Y + 80), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 165, Location.Y + 90), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Rows.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 90), Color.Black);
             
-            spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 180, Location.Y + 110), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 200, Location.Y + 130), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 165, Location.Y + 110), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Level.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 110), Color.Black);
         }
 
         void DrawNextPiece(SpriteBatch spriteBatch)
