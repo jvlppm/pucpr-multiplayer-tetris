@@ -7,8 +7,8 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>XnaProjectTest</RootNamespace>
-    <AssemblyName>XnaProjectTest</AssemblyName>
+    <RootNamespace>Tetris.MultiPlayer</RootNamespace>
+    <AssemblyName>Tetris.MultiPlayer</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>

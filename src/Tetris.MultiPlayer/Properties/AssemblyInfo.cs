@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("XnaProjectTest")]
-[assembly: AssemblyProduct("XnaProjectTest")]
+[assembly: AssemblyTitle("Tetris.MultiPlayer")]
+[assembly: AssemblyProduct("Tetris.MultiPlayer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]

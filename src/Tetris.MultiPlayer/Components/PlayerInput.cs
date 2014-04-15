@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace XnaProjectTest.Components
+namespace Tetris.MultiPlayer.Components
 {
     enum InputButton
     {

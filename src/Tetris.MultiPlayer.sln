@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30324.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tetris.MultiPlayer", "Tetris.MultiPlayer\Tetris.MultiPlayer.csproj", "{F3345631-6240-4DE2-A910-660C7507C5DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tetris.MultiPlayer.Content", "Tetris.MultiPlayer.Content\Tetris.MultiPlayer.Content.contentproj", "{102B8A2B-90B9-4272-B317-FB037A83CA7C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F3345631-6240-4DE2-A910-660C7507C5DD}.Debug|x86.ActiveCfg = Debug|x86
+		{F3345631-6240-4DE2-A910-660C7507C5DD}.Debug|x86.Build.0 = Debug|x86
+		{F3345631-6240-4DE2-A910-660C7507C5DD}.Release|x86.ActiveCfg = Release|x86
+		{F3345631-6240-4DE2-A910-660C7507C5DD}.Release|x86.Build.0 = Release|x86
+		{102B8A2B-90B9-4272-B317-FB037A83CA7C}.Debug|x86.ActiveCfg = Debug|x86
+		{102B8A2B-90B9-4272-B317-FB037A83CA7C}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,6 +1,6 @@
 using System;
 
-namespace XnaProjectTest
+namespace Tetris.MultiPlayer
 {
 #if WINDOWS || XBOX
     static class Program

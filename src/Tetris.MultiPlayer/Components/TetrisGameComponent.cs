@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using XnaProjectTest.Model;
+using Tetris.MultiPlayer.Model;
 
-namespace XnaProjectTest.Components
+namespace Tetris.MultiPlayer.Components
 {
     class TetrisGameComponent : DrawableGameComponent
     {

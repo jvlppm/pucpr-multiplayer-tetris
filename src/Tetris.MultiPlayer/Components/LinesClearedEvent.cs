@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace XnaProjectTest.Components
+namespace Tetris.MultiPlayer.Components
 {
     class LinesClearedEventArgs : EventArgs
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Linq;
 
-namespace XnaProjectTest.Model
+namespace Tetris.MultiPlayer.Model
 {
     struct PieceShape
     {

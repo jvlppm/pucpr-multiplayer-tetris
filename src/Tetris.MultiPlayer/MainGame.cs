@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
-using XnaProjectTest.Components;
+using Tetris.MultiPlayer.Components;
 
-namespace XnaProjectTest
+namespace Tetris.MultiPlayer
 {
     /// <summary>
     /// This is the main type for your game
