@@ -72,13 +72,14 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Pieces.cs" />
-    <Compile Include="PlayerInput.cs" />
+    <Compile Include="Components\LinesClearedEvent.cs" />
+    <Compile Include="Model\Pieces.cs" />
+    <Compile Include="Components\PlayerInput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="MainGame.cs" />
-    <Compile Include="TetrisGameComponent.cs" />
-    <Compile Include="TetrisGameState.cs" />
+    <Compile Include="Components\TetrisGameComponent.cs" />
+    <Compile Include="Model\TetrisGameState.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />
