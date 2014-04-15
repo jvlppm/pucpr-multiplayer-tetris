@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,8 @@ using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Components
 {
-    class TetrisGameComponent : DrawableGameComponent
+    class TetrisBoard
     {
-        SpriteBatch _spriteBatch;
         Texture2D _squareSprite;
         SpriteFont _statsFont;
 
@@ -26,8 +26,7 @@ namespace Tetris.MultiPlayer.Components
 
         public event LinesClearedEventHandler LinesCleared;
 
-        public TetrisGameComponent(Game game, IPlayerInput playerInput)
-            : base(game)
+        public TetrisBoard(IPlayerInput playerInput)
         {
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
@@ -36,16 +35,14 @@ namespace Tetris.MultiPlayer.Components
             UpdateLevel();
         }
 
-        protected override void LoadContent()
+        public void LoadContent(ContentManager content)
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _squareSprite = Game.Content.Load<Texture2D>("PieceBlock");
-            _statsFont = Game.Content.Load<SpriteFont>("DefaultFont");
-            base.LoadContent();
+            _squareSprite = content.Load<Texture2D>("PieceBlock");
+            _statsFont = content.Load<SpriteFont>("DefaultFont");
         }
 
         #region Update
-        public override void Update(GameTime gameTime)
+        public void Update(GameTime gameTime)
         {
             if (State.IsFinished)
                 return;
@@ -82,7 +79,6 @@ namespace Tetris.MultiPlayer.Components
                 if (_gravityTickTimeCount < TimeSpan.Zero)
                     _gravityTickTimeCount = TimeSpan.Zero;
             }
-            base.Update(gameTime);
         }
 
         void UpdateLevel()
@@ -94,25 +90,19 @@ namespace Tetris.MultiPlayer.Components
         #endregion
 
         #region Draw
-        public override void Draw(GameTime gameTime)
+        public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            _spriteBatch.Begin();
+            //var color = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
+            //color.SetData(new[] { Color.Gray });
+            //_spriteBatch.Draw(color, new Rectangle(Location.X, Location.Y, 260, 240), Color.White);
 
-            var color = new Texture2D(GraphicsDevice, 1, 1);
-            color.SetData(new[] { Color.Gray });
-            _spriteBatch.Draw(color, new Rectangle(Location.X, Location.Y, 260, 240), Color.White);
-
-            DrawCurrentPiece();
-            DrawNextPiece();
-            DrawGrid();
-            DrawInfo();
-
-            _spriteBatch.End();
-
-            base.Draw(gameTime);
+            DrawCurrentPiece(spriteBatch);
+            DrawNextPiece(spriteBatch);
+            DrawGrid(spriteBatch);
+            DrawInfo(spriteBatch);
         }
 
-        void DrawCurrentPiece()
+        void DrawCurrentPiece(SpriteBatch spriteBatch)
         {
             var currentPiece = State.CurrentPiece.Shape.Data;
             var piecePos = State.CurrentPiece.Position;
@@ -122,7 +112,7 @@ namespace Tetris.MultiPlayer.Components
                 for (int c = 0; c < 4; c++)
                 {
                     if (currentPiece[l, c])
-                        _spriteBatch.Draw(_squareSprite,
+                        spriteBatch.Draw(_squareSprite,
                             new Vector2(
                                 Location.X + (piecePos.X + c - 2) * _squareSprite.Width,
                                 Location.Y + (piecePos.Y + l - 1) * _squareSprite.Height
@@ -131,7 +121,7 @@ namespace Tetris.MultiPlayer.Components
             }
         }
 
-        void DrawGrid()
+        void DrawGrid(SpriteBatch spriteBatch)
         {
             for (int l = 0; l < 20; l++)
             {
@@ -139,7 +129,7 @@ namespace Tetris.MultiPlayer.Components
                 {
                     if (State.Grid[l, c] != Color.Transparent)
                     {
-                        _spriteBatch.Draw(_squareSprite,
+                        spriteBatch.Draw(_squareSprite,
                             new Vector2(
                                     Location.X + c * _squareSprite.Width,
                                     Location.Y + l * _squareSprite.Height
@@ -149,24 +139,24 @@ namespace Tetris.MultiPlayer.Components
             }
         }
 
-        void DrawInfo()
+        void DrawInfo(SpriteBatch spriteBatch)
         {
-            _spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 180, Location.Y + 10), Color.Black);
-            _spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0"), new Vector2(Location.X + 200, Location.Y + 30), Color.Black);
-
-            _spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 180, Location.Y + 60), Color.Black);
-            _spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 200, Location.Y + 80), Color.Black);
-
-            _spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 180, Location.Y + 110), Color.Black);
-            _spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 200, Location.Y + 130), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 180, Location.Y + 10), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0"), new Vector2(Location.X + 200, Location.Y + 30), Color.Black);
+            
+            spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 180, Location.Y + 60), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Rows.ToString(), new Vector2(Location.X + 200, Location.Y + 80), Color.Black);
+            
+            spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 180, Location.Y + 110), Color.Black);
+            spriteBatch.DrawString(_statsFont, State.Level.ToString(), new Vector2(Location.X + 200, Location.Y + 130), Color.Black);
         }
 
-        void DrawNextPiece()
+        void DrawNextPiece(SpriteBatch spriteBatch)
         {
             if (State.IsFinished)
                 return;
 
-            _spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 180, 155), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 180, 155), Color.Black);
             var nextPieceShape = State.NextPiece.Shapes[0].Data;
 
             for (int l = 0; l < 4; l++)
@@ -174,7 +164,7 @@ namespace Tetris.MultiPlayer.Components
                 for (int c = 0; c < 4; c++)
                 {
                     if (nextPieceShape[l, c])
-                        _spriteBatch.Draw(_squareSprite,
+                        spriteBatch.Draw(_squareSprite,
                             new Vector2(
                                 Location.X + 180 + (c) * _squareSprite.Width,
                                 Location.Y + 180 + (l) * _squareSprite.Height
