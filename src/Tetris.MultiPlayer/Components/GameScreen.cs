@@ -20,8 +20,8 @@ namespace Tetris.MultiPlayer.Components
         {
             PlayerBoards = new List<TetrisBoard>
             {
-                new TetrisBoard(new PlayerInput(Keys.D, Keys.A, Keys.S, Keys.W, Keys.Q)) { Location = new Point(80, 80) },
-                new TetrisBoard(new PlayerInput(Keys.Right, Keys.Left, Keys.Down, Keys.Up, Keys.Enter)) { Location = new Point(800 - 260 - 80, 80) }
+                new TetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 80) },
+                new TetrisBoard(new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 80) }
             };
 
             foreach (var board in PlayerBoards)
