@@ -40,11 +40,11 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
-    <Content Include="PieceBlock.png">
+    <Compile Include="PieceBlock.png">
       <Name>PieceBlock</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
-    </Content>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DefaultFont.spritefont">
