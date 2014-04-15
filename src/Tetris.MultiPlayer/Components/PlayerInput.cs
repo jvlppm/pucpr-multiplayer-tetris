@@ -22,17 +22,17 @@ namespace Tetris.MultiPlayer.Components
 
     class PlayerInput : IPlayerInput
     {
-        readonly Keys _moveRight, _moveLeft, _moveDown, _rotateCW, _rotateCCW;
+        readonly Keys MoveRight, MoveLeft, MoveDown, RotateCW, RotateCCW;
         KeyboardState _state;
         KeyboardState? _oldState;
 
         public PlayerInput(Keys moveRight, Keys moveLeft, Keys moveDown, Keys rotateCW, Keys rotateCCW)
         {
-            _moveRight = moveRight;
-            _moveLeft = moveLeft;
-            _moveDown = moveDown;
-            _rotateCW = rotateCW;
-            _rotateCCW = rotateCCW;
+            MoveRight = moveRight;
+            MoveLeft = moveLeft;
+            MoveDown = moveDown;
+            RotateCW = rotateCW;
+            RotateCCW = rotateCCW;
         }
 
         public bool IsPressed(InputButton button)
@@ -49,12 +49,12 @@ namespace Tetris.MultiPlayer.Components
         {
             switch (button)
             {
-                case InputButton.Left: return _moveLeft;
-                case InputButton.Right: return _moveRight;
-                case InputButton.Down: return _moveDown;
+                case InputButton.Left: return MoveLeft;
+                case InputButton.Right: return MoveRight;
+                case InputButton.Down: return MoveDown;
 
-                case InputButton.RotateCW: return _rotateCW;
-                case InputButton.RotateCCW: return _rotateCCW;
+                case InputButton.RotateCW: return RotateCW;
+                case InputButton.RotateCCW: return RotateCCW;
             }
 
             throw new NotImplementedException();
@@ -64,6 +64,11 @@ namespace Tetris.MultiPlayer.Components
         {
             _oldState = _state;
             _state = Keyboard.GetState();
+        }
+
+        public override string ToString()
+        {
+            return string.Format("Keys: {0}, {1}, {2} - {3}, {4}", MoveLeft, MoveRight, MoveDown, RotateCW, RotateCCW);
         }
     }
 }

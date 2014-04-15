@@ -21,7 +21,7 @@ namespace Tetris.MultiPlayer.Components
         public TetrisGameState State;
         TimeSpan _gravityTickTimeCount;
 
-        IPlayerInput PlayerInput;
+        public IPlayerInput PlayerInput;
         Dictionary<InputButton, TimeSpan> PressTime;
 
         public event LinesClearedEventHandler LinesCleared;
@@ -114,11 +114,19 @@ namespace Tetris.MultiPlayer.Components
                 for (int c = 0; c < 4; c++)
                 {
                     if (currentPiece[l, c])
+                    {
+                        var rowPos = piecePos.Y + l - 1;
+                        if (rowPos < 0 || rowPos >= 20) continue;
+
+                        var colPos = piecePos.X + c - 2;
+                        if (colPos < 0 || colPos >= 10) continue;
+
                         spriteBatch.Draw(_squareSprite,
                             new Vector2(
-                                Location.X + position.X + (piecePos.X + c - 2) * _squareSprite.Width,
-                                Location.Y + position.Y + (piecePos.Y + l - 1) * _squareSprite.Height
+                                Location.X + position.X + colPos * _squareSprite.Width,
+                                Location.Y + position.Y + rowPos * _squareSprite.Height
                             ), State.CurrentPiece.Piece.Color);
+                    }
                 }
             }
         }
@@ -158,7 +166,7 @@ namespace Tetris.MultiPlayer.Components
             if (State.IsFinished)
                 return;
 
-            spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 180, 155), Color.Black);
+            spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 165, Location.Y + 155), Color.Black);
             var nextPieceShape = State.NextPiece.Shapes[0].Data;
 
             for (int l = 0; l < 4; l++)
