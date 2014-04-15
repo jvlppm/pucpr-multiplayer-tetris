@@ -60,6 +60,12 @@ namespace Tetris.MultiPlayer
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
+            if (GamePad.GetState(PlayerIndex.One).Buttons.BigButton == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            {
+                gameScreen = new GameScreen();
+                gameScreen.LoadContent(Content);
+            }
+
             // TODO: Add your update logic here
             gameScreen.Update(gameTime);
 

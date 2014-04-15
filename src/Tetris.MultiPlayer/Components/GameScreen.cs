@@ -12,6 +12,7 @@ namespace Tetris.MultiPlayer.Components
     class GameScreen
     {
         SpriteFont BigFont, HeaderFont, DefaultFont;
+        Texture2D Background;
 
         int Winner;
         List<TetrisBoard> PlayerBoards;
@@ -20,8 +21,8 @@ namespace Tetris.MultiPlayer.Components
         {
             PlayerBoards = new List<TetrisBoard>
             {
-                new TetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 80) },
-                new TetrisBoard(new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 80) }
+                new TetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
+                new TetrisBoard(new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
             };
 
             foreach (var board in PlayerBoards)
@@ -33,6 +34,7 @@ namespace Tetris.MultiPlayer.Components
             foreach (var board in PlayerBoards)
                 board.LoadContent(content);
 
+            Background = content.Load<Texture2D>("Background");
             BigFont = content.Load<SpriteFont>("BigFont");
             HeaderFont = content.Load<SpriteFont>("HeaderFont");
             DefaultFont = content.Load<SpriteFont>("DefaultFont");
@@ -76,6 +78,8 @@ namespace Tetris.MultiPlayer.Components
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
+            spriteBatch.Draw(Background, spriteBatch.GraphicsDevice.Viewport.Bounds, Color.White);
+
             if (Winner > 0)
             {
                 var winnerText = "Player " + Winner + " Wins.";
@@ -90,12 +94,12 @@ namespace Tetris.MultiPlayer.Components
                 string playerText = "Player " + (p + 1);
                 var pSize = HeaderFont.MeasureString(playerText);
 
-                spriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 12), Color.Black);
+                spriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
                 string keysText = board.PlayerInput.ToString();
                 var kSize = DefaultFont.MeasureString(keysText);
 
-                spriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 48), Color.Black);
+                spriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
             }
 
             foreach (var board in PlayerBoards)
