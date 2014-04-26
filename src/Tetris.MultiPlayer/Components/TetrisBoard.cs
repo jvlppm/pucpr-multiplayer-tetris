@@ -96,7 +96,8 @@ namespace Tetris.MultiPlayer.Components
 
         void UpdateLevel()
         {
-            var tick = Math.Pow((0.8 - ((State.Level - 1) * 0.007)), (State.Level - 1));
+            var level = State.Level + 1;
+            var tick = Math.Pow((0.8 - ((level - 1) * 0.007)), (level - 1));
             CurrentTickTime = TimeSpan.FromSeconds(tick);
             KeyTickTime = TimeSpan.FromSeconds(tick / 5);
         }
@@ -170,7 +171,7 @@ namespace Tetris.MultiPlayer.Components
             spriteBatch.DrawString(_statsFont, State.Rows.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 90), Color.Black);
             
             spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 165, Location.Y + 110), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Level.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 110), Color.Black);
+            spriteBatch.DrawString(_statsFont, (State.Level + 1).ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 110), Color.Black);
         }
 
         void DrawNextPiece(SpriteBatch spriteBatch)
