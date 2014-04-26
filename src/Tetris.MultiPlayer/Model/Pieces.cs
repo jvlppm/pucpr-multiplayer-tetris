@@ -5,9 +5,6 @@ namespace Tetris.MultiPlayer.Model
 {
     static class Pieces
     {
-        static Random _rng;
-        static Random RNG { get { return _rng ?? (_rng = new Random(Environment.TickCount)); } }
-
         static readonly Piece I = new Piece(Color.Cyan, new[]{
             new bool[4, 4]
             {
@@ -162,10 +159,5 @@ namespace Tetris.MultiPlayer.Model
         });
 
         public static readonly Piece[] All = new[] { I, L, J, O, S, Z, T };
-
-        public static Piece Random()
-        {
-            return All[RNG.Next(All.Length)];
-        }
     }
 }

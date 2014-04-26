@@ -13,16 +13,18 @@ namespace Tetris.MultiPlayer.Components
     {
         SpriteFont BigFont, HeaderFont, DefaultFont;
         Texture2D Background;
+        PieceRandomizer Randomizer;
 
         int Winner;
         List<TetrisBoard> PlayerBoards;
 
         public GameScreen()
         {
+            Randomizer = new PieceRandomizer(2);
             PlayerBoards = new List<TetrisBoard>
             {
-                new TetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                new TetrisBoard(new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
+                new TetrisBoard(Randomizer.GetGenerator(0), new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
+                new TetrisBoard(Randomizer.GetGenerator(1), new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
             };
 
             foreach (var board in PlayerBoards)

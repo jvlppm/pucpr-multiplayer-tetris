@@ -88,13 +88,14 @@ namespace Tetris.MultiPlayer.Model
 
     struct TetrisGameState
     {
-        public static TetrisGameState NewGameState()
+        public static TetrisGameState NewGameState(IPieceGenerator generator)
         {
-            return new TetrisGameState(0, 0, new PieceInstance(Pieces.Random(), 0, new Microsoft.Xna.Framework.Point(5, 0)), Pieces.Random(), new Color[20, 10]);
+            return new TetrisGameState(generator, 0, 0, new PieceInstance(generator.GetPiece(), 0, new Microsoft.Xna.Framework.Point(5, 0)), generator.GetPiece(), new Color[20, 10]);
         }
 
-        public TetrisGameState(int rows, int points, PieceInstance current, Piece next, Color[,] grid)
+        public TetrisGameState(IPieceGenerator generator, int rows, int points, PieceInstance current, Piece next, Color[,] grid)
         {
+            PieceGenerator = generator;
             Level = rows / 10;
             Rows = rows;
             Points = points;
@@ -104,6 +105,7 @@ namespace Tetris.MultiPlayer.Model
             IsFinished = !ValidPosition(current, grid);
         }
 
+        public readonly IPieceGenerator PieceGenerator;
         public readonly int Level;
         public readonly int Rows;
         public readonly int Points;
@@ -166,7 +168,7 @@ namespace Tetris.MultiPlayer.Model
             }
 
             if(ValidPosition(CurrentPiece, grid))
-                return new TetrisGameState(Rows, Points, CurrentPiece, NextPiece, grid);
+                return new TetrisGameState(PieceGenerator, Rows, Points, CurrentPiece, NextPiece, grid);
 
             return SolidifyCurrentPiece(grid);
         }
@@ -174,7 +176,7 @@ namespace Tetris.MultiPlayer.Model
         TetrisGameState SetCurrentPiece(PieceInstance currentPiece, bool autoSolidify)
         {
             if (ValidPosition(currentPiece, Grid))
-                return new TetrisGameState(Rows, Points, currentPiece, NextPiece, Grid);
+                return new TetrisGameState(PieceGenerator, Rows, Points, currentPiece, NextPiece, Grid);
 
             if (autoSolidify)
                 return SolidifyCurrentPiece(Grid);
@@ -249,7 +251,7 @@ namespace Tetris.MultiPlayer.Model
                 case 4: points += Level * 1200 + 1200; break;
             }
 
-            return new TetrisGameState(Rows + cleared, Points + points, new PieceInstance(NextPiece, 0, new Point(5, 0)), Pieces.Random(), grid);
+            return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new PieceInstance(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
         }
     }
 }
