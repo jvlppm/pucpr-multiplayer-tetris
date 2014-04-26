@@ -57,15 +57,27 @@ namespace Tetris.MultiPlayer.Components
                 PressTime[button] += gameTime.ElapsedGameTime;
 
             if (Press(InputButton.Left))
+            {
                 State = State.MoveLeft();
+                MainGame.Move.Play();
+            }
             if (Press(InputButton.Right))
+            {
                 State = State.MoveRight();
+                MainGame.Move.Play();
+            }
             if (Press(InputButton.Down))
                 forceTick = true;
             if (Press(InputButton.RotateCW))
+            {
                 State = State.RotateClockwise();
+                MainGame.Move.Play();
+            }
             if (Press(InputButton.RotateCCW))
+            {
                 State = State.RotateCounterClockwise();
+                MainGame.Move.Play();
+            }
 
             if (_gravityTickTimeCount > CurrentTickTime || forceTick)
             {
@@ -205,6 +217,8 @@ namespace Tetris.MultiPlayer.Components
 
         void FireLinesCleared(int lines)
         {
+            MainGame.Cleared.Play();
+
             if (LinesCleared != null)
                 LinesCleared(this, new LinesClearedEventArgs(lines));
         }

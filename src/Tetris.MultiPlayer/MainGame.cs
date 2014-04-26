@@ -1,6 +1,8 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using System.Collections.Generic;
 using System.Linq;
 using Tetris.MultiPlayer.Components;
@@ -15,6 +17,12 @@ namespace Tetris.MultiPlayer
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         GameScreen gameScreen;
+
+        public static SoundEffect Move;
+        public static SoundEffect Solidified;
+        public static SoundEffect Cleared;
+
+        Song GameSong;
 
         public MainGame()
         {
@@ -46,6 +54,13 @@ namespace Tetris.MultiPlayer
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            GameSong = Content.Load<Song>("Music");
+            MediaPlayer.IsRepeating = true;
+            MediaPlayer.Play(GameSong);
+
+            Move = Content.Load<SoundEffect>("beep");
+            Solidified = Content.Load<SoundEffect>("menu_click-001");
+            Cleared = Content.Load<SoundEffect>("menu_sweep-001");
             gameScreen.LoadContent(Content);
         }
 

@@ -251,6 +251,8 @@ namespace Tetris.MultiPlayer.Model
                 case 4: points += Level * 1200 + 1200; break;
             }
 
+            MainGame.Solidified.Play();
+
             return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new PieceInstance(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
         }
     }

@@ -92,7 +92,7 @@ namespace Tetris.MultiPlayer.Components
             var horAnalog = Math.Abs(state.ThumbSticks.Left.X) <= analogToDigital ? 0 : hDir;
             var horDPad = (state.IsButtonDown(Buttons.DPadLeft) ? -1 : 0) + (state.IsButtonDown(Buttons.DPadRight) ? 1 : 0);
 
-            var verAnalog = Math.Abs(state.ThumbSticks.Left.Y) <= analogToDigital ? 0 : vDir;
+            var verAnalog = Math.Abs(state.ThumbSticks.Left.Y) <= analogToDigital ? 0 : -vDir;
             var verDPad = (state.IsButtonDown(Buttons.DPadUp) ? -1 : 0) + (state.IsButtonDown(Buttons.DPadDown) ? 1 : 0);
 
             var horMove = MathHelper.Clamp(horAnalog + horDPad, -1, 1);
@@ -102,8 +102,8 @@ namespace Tetris.MultiPlayer.Components
               { InputButton.Left, horMove < 0 },
               { InputButton.Right, horMove > 0 },
               { InputButton.Down, verMove > 0 },
-              { InputButton.RotateCW, state.IsButtonDown(Buttons.RightShoulder) },
-              { InputButton.RotateCCW, state.IsButtonDown(Buttons.LeftShoulder) },
+              { InputButton.RotateCW, state.IsButtonDown(Buttons.RightShoulder) || state.IsButtonDown(Buttons.A) },
+              { InputButton.RotateCCW, state.IsButtonDown(Buttons.LeftShoulder) || state.IsButtonDown(Buttons.X) },
             };
         }
 
@@ -132,7 +132,7 @@ namespace Tetris.MultiPlayer.Components
         public override string ToString()
         {
             if(_lastInputMode == SelectedInput.GamePad)
-                return string.Format("GamePad {0}: Directional + Left/Right Shoulders" + (int)(PlayerIndex));
+                return string.Format("GamePad {0}: Directional + Left/Right Shoulders", (int)(PlayerIndex));
 
             if (PlayerIndex == Microsoft.Xna.Framework.PlayerIndex.Two)
                 return "Move: A, D - Speed: S - Rotate: W, Q";
