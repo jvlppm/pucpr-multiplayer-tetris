@@ -101,7 +101,7 @@ namespace Tetris.MultiPlayer.Components
             return new Dictionary<InputButton, bool> {
               { InputButton.Left, horMove < 0 },
               { InputButton.Right, horMove > 0 },
-              { InputButton.Down, verMove > 0 },
+              { InputButton.Down, verMove > 0 || state.Triggers.Right > analogToDigital },
               { InputButton.RotateCW, state.IsButtonDown(Buttons.RightShoulder) || state.IsButtonDown(Buttons.A) },
               { InputButton.RotateCCW, state.IsButtonDown(Buttons.LeftShoulder) || state.IsButtonDown(Buttons.X) },
             };
@@ -109,7 +109,7 @@ namespace Tetris.MultiPlayer.Components
 
         IDictionary<InputButton, bool> GetState(KeyboardState state, PlayerIndex index)
         {
-            if (index == Microsoft.Xna.Framework.PlayerIndex.One)
+            if (index == Microsoft.Xna.Framework.PlayerIndex.Two)
             {
                 return new Dictionary<InputButton, bool> {
                   { InputButton.Left, state.IsKeyDown(Keys.Left) },
@@ -134,7 +134,7 @@ namespace Tetris.MultiPlayer.Components
             if(_lastInputMode == SelectedInput.GamePad)
                 return string.Format("GamePad {0}: Directional + Left/Right Shoulders", (int)(PlayerIndex));
 
-            if (PlayerIndex == Microsoft.Xna.Framework.PlayerIndex.Two)
+            if (PlayerIndex == Microsoft.Xna.Framework.PlayerIndex.One)
                 return "Move: A, D - Speed: S - Rotate: W, Q";
 
             return "Move: Arrows - Rotate: Up, Enter";
