@@ -22,6 +22,10 @@ namespace Tetris.MultiPlayer
         public static SoundEffect Solidified;
         public static SoundEffect Cleared;
 
+        public static SoundEffect Begin;
+        public static SoundEffect End;
+        public static SoundEffect Return;
+
         Texture2D StartScreen;
         Texture2D PressStart;
         float _startCount, _startFade;
@@ -69,6 +73,10 @@ namespace Tetris.MultiPlayer
             Move = Content.Load<SoundEffect>("beep");
             Solidified = Content.Load<SoundEffect>("menu_click-001");
             Cleared = Content.Load<SoundEffect>("menu_sweep-001");
+            Begin = Content.Load<SoundEffect>("scifi_laser_gun-003");
+            End = Content.Load<SoundEffect>("scifi_laser_echo-001");
+            Return = Content.Load<SoundEffect>("scifi_laser_echo-002");
+
             gameScreen.LoadContent(Content);
         }
 
@@ -83,6 +91,8 @@ namespace Tetris.MultiPlayer
             {
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 {
+                    Return.Play();
+
                     gameScreen = new GameScreen();
                     gameScreen.LoadContent(Content);
                     _playing = false;
@@ -97,8 +107,15 @@ namespace Tetris.MultiPlayer
             {
                 if (_startCount <= 1)
                     return;
+
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                    Exit();
+
                 if (GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Enter))
+                {
                     _playing = true;
+                    Begin.Play();
+                }
             }
 
             base.Update(gameTime);

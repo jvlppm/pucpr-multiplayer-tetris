@@ -74,8 +74,15 @@ namespace Tetris.MultiPlayer.Components
                 }
             }
 
+            var oldPlayerCount = PlayerBoards.Count(b => !b.State.IsFinished);
+
             foreach (var board in PlayerBoards)
                 board.Update(gameTime);
+
+            var playerCount = PlayerBoards.Count(b => !b.State.IsFinished);
+
+            if(oldPlayerCount > playerCount)
+                MainGame.End.Play();
         }
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
