@@ -22,6 +22,11 @@ namespace Tetris.MultiPlayer
         public static SoundEffect Solidified;
         public static SoundEffect Cleared;
 
+        Texture2D StartScreen;
+        Texture2D PressStart;
+        float _startCount, _startFade;
+        bool _playing, _startFadingOut;
+
         Song GameSong;
 
         public MainGame()
@@ -54,6 +59,9 @@ namespace Tetris.MultiPlayer
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            StartScreen = Content.Load<Texture2D>("StartScreen");
+            PressStart = Content.Load<Texture2D>("PressStart");
+
             GameSong = Content.Load<Song>("Music");
             MediaPlayer.IsRepeating = true;
             MediaPlayer.Play(GameSong);
@@ -71,18 +79,27 @@ namespace Tetris.MultiPlayer
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
-
-            if (GamePad.GetState(PlayerIndex.One).Buttons.BigButton == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (_playing)
             {
-                gameScreen = new GameScreen();
-                gameScreen.LoadContent(Content);
-            }
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                {
+                    gameScreen = new GameScreen();
+                    gameScreen.LoadContent(Content);
+                    _playing = false;
+                    _startCount = 0;
+                    _startFade = 0;
+                }
+                else
+                    gameScreen.Update(gameTime);
 
-            // TODO: Add your update logic here
-            gameScreen.Update(gameTime);
+            }
+            else
+            {
+                if (_startCount <= 1)
+                    return;
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Enter))
+                    _playing = true;
+            }
 
             base.Update(gameTime);
         }
@@ -96,7 +113,33 @@ namespace Tetris.MultiPlayer
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin();
 
-            gameScreen.Draw(spriteBatch, gameTime);
+            if(_playing)
+                gameScreen.Draw(spriteBatch, gameTime);
+            else
+            {
+                _startCount += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                if (_startCount >= 1)
+                {
+                    if (_startFadingOut)
+                    {
+                        _startFade -= (float)gameTime.ElapsedGameTime.TotalSeconds / 2;
+                        if (_startFade < 0.6f)
+                            _startFadingOut = false;
+                    }
+                    else
+                    {
+                        _startFade += (float)gameTime.ElapsedGameTime.TotalSeconds * 2;
+                        if (_startFade >= 1)
+                            _startFadingOut = true;
+                    }
+                }
+                else
+                    _startFade = _startCount;
+
+                spriteBatch.Draw(StartScreen, graphics.GraphicsDevice.Viewport.Bounds, null, Color.White);
+                spriteBatch.Draw(PressStart, new Vector2((graphics.GraphicsDevice.Viewport.Width - PressStart.Width) / 2, graphics.GraphicsDevice.Viewport.Height * 3 / 4), Color.White * _startFade);
+            }
 
             spriteBatch.End();
 
