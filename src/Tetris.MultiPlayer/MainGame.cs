@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
@@ -49,6 +50,7 @@ namespace Tetris.MultiPlayer
         {
             // TODO: Add your initialization logic here
             gameScreen = new GameScreen();
+            Components.Add(new GamerServicesComponent(this));
 
             base.Initialize();
         }
@@ -105,16 +107,17 @@ namespace Tetris.MultiPlayer
             }
             else
             {
-                if (_startCount <= 1)
-                    return;
-
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                    Exit();
-
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Enter) || Keyboard.GetState().IsKeyDown(Keys.Space))
+                Window.Title = Guide.IsVisible.ToString();
+                if (_startCount > 1 && !Guide.IsVisible)
                 {
-                    _playing = true;
-                    Begin.Play();
+                    if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                        Exit();
+
+                    if (GamePad.GetState(PlayerIndex.One).Buttons.Start == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Enter) || Keyboard.GetState().IsKeyDown(Keys.Space))
+                    {
+                        _playing = true;
+                        Begin.Play();
+                    }
                 }
             }
 
