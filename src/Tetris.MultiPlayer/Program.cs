@@ -10,10 +10,8 @@ namespace Tetris.MultiPlayer
         /// </summary>
         static void Main(string[] args)
         {
-            using (MainGame game = new MainGame())
-            {
+            using (var game = new MainGame())
                 game.Run();
-            }
         }
     }
 #endif

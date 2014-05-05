@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 using System.Linq;
 
 namespace Tetris.MultiPlayer.Model
@@ -88,6 +90,19 @@ namespace Tetris.MultiPlayer.Model
 
     struct TetrisGameState
     {
+        public static SoundEffect Move;
+        public static SoundEffect Solidified;
+        public static SoundEffect Cleared;
+        public static SoundEffect End;
+
+        public static void LoadContent(ContentManager content)
+        {
+            Move = content.Load<SoundEffect>("beep");
+            Solidified = content.Load<SoundEffect>("menu_click-001");
+            Cleared = content.Load<SoundEffect>("menu_sweep-001");
+            End = content.Load<SoundEffect>("scifi_laser_echo-001");
+        }
+
         public static TetrisGameState NewGameState(IPieceGenerator generator)
         {
             return new TetrisGameState(generator, 0, 0, new PieceInstance(generator.GetPiece(), 0, new Microsoft.Xna.Framework.Point(5, 0)), generator.GetPiece(), new Color[20, 10]);
@@ -103,6 +118,8 @@ namespace Tetris.MultiPlayer.Model
             NextPiece = next;
             Grid = grid;
             IsFinished = !ValidPosition(current, grid);
+            if (IsFinished)
+                End.Play();
         }
 
         public readonly IPieceGenerator PieceGenerator;
@@ -123,6 +140,7 @@ namespace Tetris.MultiPlayer.Model
 
         public TetrisGameState MoveLeft()
         {
+            Move.Play();
             var nextPiece = new PieceInstance(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X - 1, CurrentPiece.Position.Y));
             return SetCurrentPiece(nextPiece, false);
@@ -130,6 +148,7 @@ namespace Tetris.MultiPlayer.Model
 
         public TetrisGameState MoveRight()
         {
+            Move.Play();
             var nextPiece = new PieceInstance(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X + 1, CurrentPiece.Position.Y));
             return SetCurrentPiece(nextPiece, false);
@@ -137,6 +156,7 @@ namespace Tetris.MultiPlayer.Model
 
         public TetrisGameState RotateClockwise()
         {
+            Move.Play();
             var nextRotation = (CurrentPiece.Rotation - 1) % CurrentPiece.Piece.Shapes.Length;
             if (nextRotation < 0)
                 nextRotation += CurrentPiece.Piece.Shapes.Length;
@@ -146,6 +166,7 @@ namespace Tetris.MultiPlayer.Model
 
         public TetrisGameState RotateCounterClockwise()
         {
+            Move.Play();
             var nextRotation = (CurrentPiece.Rotation + 1) % CurrentPiece.Piece.Shapes.Length;
             var nextPiece = new PieceInstance(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
             return SetCurrentPiece(nextPiece, false);
@@ -251,7 +272,9 @@ namespace Tetris.MultiPlayer.Model
                 case 4: points += Level * 1200 + 1200; break;
             }
 
-            MainGame.Solidified.Play();
+            if(cleared > 0)
+                Cleared.Play();
+            Solidified.Play();
 
             return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new PieceInstance(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
         }

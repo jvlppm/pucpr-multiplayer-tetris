@@ -60,6 +60,12 @@
     <XnaCompressContent>true</XnaCompressContent>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Jv.Games.Xna">
+      <HintPath>..\..\references\Jv.Games.Xna.dll</HintPath>
+    </Reference>
+    <Reference Include="Jv.Games.Xna.Async">
+      <HintPath>..\..\references\Jv.Games.Xna.Async.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.Graphics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
@@ -72,14 +78,15 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Components\GameScreen.cs" />
+    <Compile Include="Activities\GamePlayActivity.cs" />
+    <Compile Include="Activities\StartScreenActivity.cs" />
     <Compile Include="Components\LinesClearedEvent.cs" />
+    <Compile Include="MainGame.cs" />
     <Compile Include="Model\Pieces.cs" />
     <Compile Include="Components\PlayerInput.cs" />
     <Compile Include="PieceRandomizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="MainGame.cs" />
     <Compile Include="Components\TetrisBoard.cs" />
     <Compile Include="Model\TetrisGameState.cs" />
   </ItemGroup>

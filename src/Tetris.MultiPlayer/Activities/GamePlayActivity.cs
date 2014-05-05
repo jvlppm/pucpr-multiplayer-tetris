@@ -1,16 +1,22 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
+﻿using Jv.Games.Xna.Async;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Tetris.MultiPlayer.Components;
 
-namespace Tetris.MultiPlayer.Components
+namespace Tetris.MultiPlayer.Activities
 {
-    class GameScreen
+    class GamePlayActivity : Activity
     {
+        public static SoundEffect Begin;
+        public static SoundEffect Return;
+
         SpriteFont BigFont, HeaderFont, DefaultFont;
         Texture2D Background;
         PieceRandomizer Randomizer;
@@ -18,7 +24,8 @@ namespace Tetris.MultiPlayer.Components
         int Winner;
         List<TetrisBoard> PlayerBoards;
 
-        public GameScreen()
+        public GamePlayActivity(Game game)
+            : base(game)
         {
             Randomizer = new PieceRandomizer(2);
             PlayerBoards = new List<TetrisBoard>
@@ -31,15 +38,27 @@ namespace Tetris.MultiPlayer.Components
                 board.LinesCleared += LinesCleared;
         }
 
-        public void LoadContent(ContentManager content)
+        protected override void Initialize()
         {
             foreach (var board in PlayerBoards)
-                board.LoadContent(content);
+                board.LoadContent(Content);
 
-            Background = content.Load<Texture2D>("Background");
-            BigFont = content.Load<SpriteFont>("BigFont");
-            HeaderFont = content.Load<SpriteFont>("HeaderFont");
-            DefaultFont = content.Load<SpriteFont>("DefaultFont");
+            Begin = Content.Load<SoundEffect>("scifi_laser_gun-003");
+            Return = Content.Load<SoundEffect>("scifi_laser_echo-002");
+
+            Background = Content.Load<Texture2D>("Background");
+            BigFont = Content.Load<SpriteFont>("BigFont");
+            HeaderFont = Content.Load<SpriteFont>("HeaderFont");
+            DefaultFont = Content.Load<SpriteFont>("DefaultFont");
+
+            base.Initialize();
+        }
+
+        protected async override System.Threading.Tasks.Task RunActivity()
+        {
+            Begin.Play();
+            await base.RunActivity();
+            Return.Play();
         }
 
         void LinesCleared(object sender, LinesClearedEventArgs e)
@@ -55,8 +74,11 @@ namespace Tetris.MultiPlayer.Components
             }
         }
 
-        public void Update(GameTime gameTime)
+        protected override void Update(Microsoft.Xna.Framework.GameTime gameTime)
         {
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                Exit();
+
             if (Winner <= 0)
             {
                 if (PlayerBoards.All(b => b.State.IsFinished))
@@ -74,45 +96,40 @@ namespace Tetris.MultiPlayer.Components
                 }
             }
 
-            var oldPlayerCount = PlayerBoards.Count(b => !b.State.IsFinished);
-
             foreach (var board in PlayerBoards)
                 board.Update(gameTime);
-
-            var playerCount = PlayerBoards.Count(b => !b.State.IsFinished);
-
-            if(oldPlayerCount > playerCount)
-                MainGame.End.Play();
         }
 
-        public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+        protected override void Draw(Microsoft.Xna.Framework.GameTime gameTime)
         {
-            spriteBatch.Draw(Background, spriteBatch.GraphicsDevice.Viewport.Bounds, Color.White);
+            SpriteBatch.Begin();
+            SpriteBatch.Draw(Background, SpriteBatch.GraphicsDevice.Viewport.Bounds, Color.White);
 
             if (Winner > 0)
             {
                 var winnerText = "Player " + Winner + " Wins.";
                 var textSize = BigFont.MeasureString(winnerText);
-                spriteBatch.DrawString(BigFont, winnerText, new Vector2((800 - textSize.X) / 2, 400), Color.Black);
+                SpriteBatch.DrawString(BigFont, winnerText, new Vector2((Viewport.Width - textSize.X) / 2, 400), Color.Black);
             }
 
-            var boardWidth = 800 / PlayerBoards.Count;
+            var boardWidth = Viewport.Width / PlayerBoards.Count;
             for (var p = 0; p < PlayerBoards.Count; p++ )
             {
                 var board = PlayerBoards[p];
                 string playerText = "Player " + (p + 1);
                 var pSize = HeaderFont.MeasureString(playerText);
 
-                spriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
+                SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
                 string keysText = board.PlayerInput.ToString();
                 var kSize = DefaultFont.MeasureString(keysText);
 
-                spriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
             }
 
             foreach (var board in PlayerBoards)
-                board.Draw(spriteBatch, gameTime);
+                board.Draw(SpriteBatch, gameTime);
+            SpriteBatch.End();
         }
     }
 }
