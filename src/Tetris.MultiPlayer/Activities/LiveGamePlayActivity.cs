@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Tetris.MultiPlayer.Components;
+using Tetris.MultiPlayer.Model;
 using Tetris.MultiPlayer.Network;
 
 namespace Tetris.MultiPlayer.Activities
@@ -23,40 +24,12 @@ namespace Tetris.MultiPlayer.Activities
 
         int Winner;
         List<TetrisBoard> PlayerBoards;
+        NetworkSession _session;
 
         public LiveGamePlayActivity(Game game, NetworkSession session)
             : base(game)
         {
-            var players = session.LocalGamers.OfType<LocalNetworkGamer>();
-            var playerIds = players.Select(p => p.Id).ToArray();
-
-            if (session.IsHost)
-            {
-                var randomizer = new HostPieceRandomizer(playerIds);
-                var channel = new HostChannel(session, randomizer);
-                channel.Listen(CancelOnExit);
-
-                PlayerBoards = new List<TetrisBoard>
-                {
-                    new TetrisBoard(randomizer.HostGenerator, new LocalPlayerInput()) { Location = new Point(80, 100) },
-                    new TetrisBoard(randomizer.RealClientGenerators[playerIds[0]], new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
-                };
-            }
-            else
-            {
-                var channel = new ClientChannel(session);
-                channel.Listen(CancelOnExit);
-                var randomizer = new ClientPieceRandomizer(channel);
-
-                PlayerBoards = new List<TetrisBoard>
-                {
-                    new TetrisBoard(randomizer.GetGenerator(), new LocalPlayerInput()) { Location = new Point(80, 100) },
-                    new TetrisBoard(randomizer.GetGenerator(playerIds[0]), new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
-                };
-            }
-
-            foreach (var board in PlayerBoards)
-                board.LinesCleared += LinesCleared;
+            _session = session;
         }
 
         protected override void Initialize()
@@ -77,6 +50,46 @@ namespace Tetris.MultiPlayer.Activities
 
         protected async override System.Threading.Tasks.Task RunActivity()
         {
+            var players = _session.LocalGamers.OfType<LocalNetworkGamer>();
+            var playerIds = players.Select(p => p.Id).ToArray();
+
+            var p1BoardLocation = new Point(80, 100);
+            var p2BoardLocation = new Point(800 - 260 - 80, 100);
+
+            if (_session.IsHost)
+            {
+                var randomizer = new HostPieceRandomizer(playerIds);
+                var channel = new HostChannel(_session, randomizer);
+                channel.Listen(CancelOnExit);
+
+                var p1GameState = TetrisGameState.NewGameState(randomizer.HostGenerator);
+                var p2GameState = TetrisGameState.NewGameState(randomizer.RealClientGenerators[playerIds[0]]);
+
+                PlayerBoards = new List<TetrisBoard>
+                {
+                    new TetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
+                    new TetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
+                };
+            }
+            else
+            {
+                var channel = new ClientChannel(_session);
+                channel.Listen(CancelOnExit);
+                var randomizer = new ClientPieceRandomizer(channel);
+
+                var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
+                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(playerIds[0]));
+
+                PlayerBoards = new List<TetrisBoard>
+                {
+                    new TetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
+                    new TetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
+                };
+            }
+
+            foreach (var board in PlayerBoards)
+                board.LinesCleared += LinesCleared;
+
             Begin.Play();
             await base.RunActivity();
             Return.Play();

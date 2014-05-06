@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tetris.MultiPlayer.Components;
+using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Activities
 {
@@ -25,15 +26,7 @@ namespace Tetris.MultiPlayer.Activities
         public LocalGamePlayActivity(Game game)
             : base(game)
         {
-            Randomizer = new PieceRandomizer(2);
-            PlayerBoards = new List<TetrisBoard>
-            {
-                new TetrisBoard(Randomizer.GetGenerator(0), new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                new TetrisBoard(Randomizer.GetGenerator(1), new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
-            };
 
-            foreach (var board in PlayerBoards)
-                board.LinesCleared += LinesCleared;
         }
 
         protected override void Initialize()
@@ -54,6 +47,19 @@ namespace Tetris.MultiPlayer.Activities
 
         protected async override System.Threading.Tasks.Task RunActivity()
         {
+            var p1GameState = TetrisGameState.NewGameState(Randomizer.GetGenerator(0));
+            var p2GameState = TetrisGameState.NewGameState(Randomizer.GetGenerator(1));
+
+            Randomizer = new PieceRandomizer(2);
+            PlayerBoards = new List<TetrisBoard>
+            {
+                new TetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
+                new TetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
+            };
+
+            foreach (var board in PlayerBoards)
+                board.LinesCleared += LinesCleared;
+
             Begin.Play();
             await base.RunActivity();
             Return.Play();
@@ -111,7 +117,7 @@ namespace Tetris.MultiPlayer.Activities
             }
 
             var boardWidth = Viewport.Width / PlayerBoards.Count;
-            for (var p = 0; p < PlayerBoards.Count; p++ )
+            for (var p = 0; p < PlayerBoards.Count; p++)
             {
                 var board = PlayerBoards[p];
                 string playerText = "Player " + (p + 1);

@@ -54,11 +54,11 @@ namespace Tetris.MultiPlayer.Model
         public readonly bool IsFinished;
         public readonly Color[,] Grid;
 
-        public TetrisGameState Tick()
+        public async Task<TetrisGameState> Tick()
         {
             var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X, CurrentPiece.Position.Y + 1));
-            return SetCurrentPiece(nextPiece, true);
+            return await SetCurrentPiece(nextPiece, true);
         }
 
         public TetrisGameState MoveLeft()
@@ -66,7 +66,7 @@ namespace Tetris.MultiPlayer.Model
             Move.Play();
             var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X - 1, CurrentPiece.Position.Y));
-            return SetCurrentPiece(nextPiece, false);
+            return TrySetCurrentPiece(nextPiece);
         }
 
         public TetrisGameState MoveRight()
@@ -74,7 +74,7 @@ namespace Tetris.MultiPlayer.Model
             Move.Play();
             var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X + 1, CurrentPiece.Position.Y));
-            return SetCurrentPiece(nextPiece, false);
+            return TrySetCurrentPiece(nextPiece);
         }
 
         public TetrisGameState RotateClockwise()
@@ -84,7 +84,7 @@ namespace Tetris.MultiPlayer.Model
             if (nextRotation < 0)
                 nextRotation += CurrentPiece.Piece.Shapes.Length;
             var nextPiece = new MovablePiece(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
-            return SetCurrentPiece(nextPiece, false);
+            return TrySetCurrentPiece(nextPiece);
         }
 
         public TetrisGameState RotateCounterClockwise()
@@ -92,10 +92,10 @@ namespace Tetris.MultiPlayer.Model
             Move.Play();
             var nextRotation = (CurrentPiece.Rotation + 1) % CurrentPiece.Piece.Shapes.Length;
             var nextPiece = new MovablePiece(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
-            return SetCurrentPiece(nextPiece, false);
+            return TrySetCurrentPiece(nextPiece);
         }
 
-        public TetrisGameState MoveLinesUp(int count, int spaceLocation)
+        public async Task<TetrisGameState> MoveLinesUp(int count, int spaceLocation)
         {
             var grid = (Color[,])Grid.Clone();
 
@@ -114,16 +114,24 @@ namespace Tetris.MultiPlayer.Model
             if(ValidPosition(CurrentPiece, grid))
                 return new TetrisGameState(PieceGenerator, Rows, Points, CurrentPiece, NextPiece, grid);
 
-            return SolidifyCurrentPiece(grid);
+            return await SolidifyCurrentPiece(grid);
         }
 
-        TetrisGameState SetCurrentPiece(MovablePiece currentPiece, bool autoSolidify)
+        async Task<TetrisGameState> SetCurrentPiece(MovablePiece currentPiece, bool autoSolidify)
         {
             if (ValidPosition(currentPiece, Grid))
                 return new TetrisGameState(PieceGenerator, Rows, Points, currentPiece, NextPiece, Grid);
 
             if (autoSolidify)
-                return SolidifyCurrentPiece(Grid);
+                return await SolidifyCurrentPiece(Grid);
+
+            return this;
+        }
+
+        TetrisGameState TrySetCurrentPiece(MovablePiece currentPiece)
+        {
+            if (ValidPosition(currentPiece, Grid))
+                return new TetrisGameState(PieceGenerator, Rows, Points, currentPiece, NextPiece, Grid);
 
             return this;
         }
@@ -146,7 +154,7 @@ namespace Tetris.MultiPlayer.Model
             return true;
         }
 
-        TetrisGameState SolidifyCurrentPiece(Color[,] grid)
+        async Task<TetrisGameState> SolidifyCurrentPiece(Color[,] grid)
         {
             for (int l = 0; l < 4; l++)
             {
@@ -198,7 +206,9 @@ namespace Tetris.MultiPlayer.Model
                 Cleared.Play();
             Solidified.Play();
 
-            return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new MovablePiece(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
+            var nextPiece = await PieceGenerator.GetPiece();
+
+            return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new MovablePiece(NextPiece, 0, new Point(5, 0)), nextPiece, grid);
         }
     }
 }

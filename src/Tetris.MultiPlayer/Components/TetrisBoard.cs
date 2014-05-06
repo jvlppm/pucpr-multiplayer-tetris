@@ -3,16 +3,21 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using Tetris.MultiPlayer.Model;
+using Tetris.MultiPlayer.Helpers;
 
 namespace Tetris.MultiPlayer.Components
 {
     class TetrisBoard
     {
+        bool _updating;
+
         Texture2D _squareSprite, _boardBackground;
         SpriteFont _statsFont;
+        MutexAsync _updateMutex;
 
         public Point Location;
 
@@ -29,6 +34,8 @@ namespace Tetris.MultiPlayer.Components
 
         public TetrisBoard(TetrisGameState state, IPlayerInput playerInput)
         {
+            _updateMutex = new MutexAsync();
+
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
 
@@ -46,43 +53,52 @@ namespace Tetris.MultiPlayer.Components
         }
 
         #region Update
-        public void Update(GameTime gameTime)
+
+        //TODO: UpdateContext
+        public async Task Update(GameTime gameTime)
         {
-            if (State.IsFinished)
+            if (_updating || State.IsFinished)
                 return;
 
-            _gravityTickTimeCount += gameTime.ElapsedGameTime;
+            _updating = true;
 
-            bool forceTick = false;
-
-            PlayerInput.Update(gameTime);
-            foreach (var button in PressTime.Keys.ToArray())
-                PressTime[button] += gameTime.ElapsedGameTime;
-
-            if (Press(InputButton.Left))
-                State = State.MoveLeft();
-            if (Press(InputButton.Right))
-                State = State.MoveRight();
-            if (Press(InputButton.Down))
-                forceTick = true;
-            if (Press(InputButton.RotateCW))
-                State = State.RotateClockwise();
-            if (Press(InputButton.RotateCCW))
-                State = State.RotateCounterClockwise();
-
-            if (_gravityTickTimeCount > CurrentTickTime || forceTick)
+            using (await _updateMutex.WaitAsync())
             {
-                var oldRows = State.Rows;
-                State = State.Tick();
-                UpdateLevel();
-                var clearedRows = State.Rows - oldRows;
-                if (clearedRows > 0)
-                    FireLinesCleared(clearedRows);
+                _gravityTickTimeCount += gameTime.ElapsedGameTime;
 
-                _gravityTickTimeCount -= CurrentTickTime;
-                if (_gravityTickTimeCount < TimeSpan.Zero)
-                    _gravityTickTimeCount = TimeSpan.Zero;
+                bool forceTick = false;
+
+                PlayerInput.Update(gameTime);
+                foreach (var button in PressTime.Keys.ToArray())
+                    PressTime[button] += gameTime.ElapsedGameTime;
+
+                if (Press(InputButton.Left))
+                    State = State.MoveLeft();
+                if (Press(InputButton.Right))
+                    State = State.MoveRight();
+                if (Press(InputButton.Down))
+                    forceTick = true;
+                if (Press(InputButton.RotateCW))
+                    State = State.RotateClockwise();
+                if (Press(InputButton.RotateCCW))
+                    State = State.RotateCounterClockwise();
+
+                if (_gravityTickTimeCount > CurrentTickTime || forceTick)
+                {
+                    var oldRows = State.Rows;
+                    State = await State.Tick();
+                    UpdateLevel();
+                    var clearedRows = State.Rows - oldRows;
+                    if (clearedRows > 0)
+                        FireLinesCleared(clearedRows);
+
+                    _gravityTickTimeCount -= CurrentTickTime;
+                    if (_gravityTickTimeCount < TimeSpan.Zero)
+                        _gravityTickTimeCount = TimeSpan.Zero;
+                }
             }
+
+            _updating = false;
         }
 
         void UpdateLevel()
@@ -157,10 +173,10 @@ namespace Tetris.MultiPlayer.Components
         {
             spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 165, Location.Y + 10), Color.Black);
             spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0").PadLeft(13), new Vector2(Location.X + 165, Location.Y + 30), Color.Black);
-            
+
             spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 165, Location.Y + 90), Color.Black);
             spriteBatch.DrawString(_statsFont, State.Rows.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 90), Color.Black);
-            
+
             spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 165, Location.Y + 110), Color.Black);
             spriteBatch.DrawString(_statsFont, (State.Level + 1).ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 110), Color.Black);
         }
@@ -212,9 +228,10 @@ namespace Tetris.MultiPlayer.Components
             if (LinesCleared != null)
                 LinesCleared(this, new LinesClearedEventArgs(lines));
         }
-        public void MoveLinesUp(int count)
+        public async Task MoveLinesUp(int count)
         {
-            State = State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
+            using (await _updateMutex.WaitAsync())
+                State = await State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
         }
     }
 }
