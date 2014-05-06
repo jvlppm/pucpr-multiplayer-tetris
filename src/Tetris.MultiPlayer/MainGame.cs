@@ -44,7 +44,7 @@ namespace Tetris.MultiPlayer
                         case StartScreenActivity.Result.Exit:
                             return;
                         case StartScreenActivity.Result.Local:
-                            await activity.Run<GamePlayActivity>();
+                            await activity.Run<LocalGamePlayActivity>();
                             break;
                         default:
                             throw new NotImplementedException();

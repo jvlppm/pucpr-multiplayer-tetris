@@ -1,93 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
-using System.Linq;
 
 namespace Tetris.MultiPlayer.Model
 {
-    struct PieceShape
-    {
-        public PieceShape(bool[,] shape)
-            : this()
-        {
-            Data = shape;
-            LeftWidth = 2;
-            RightWidth = 1;
-
-            for (int i = 0; i < 2; i++)
-            {
-                bool emptyCol = true;
-                for (int j = 0; j < 4; j++)
-                {
-                    if (shape[j, i])
-                    {
-                        emptyCol = false;
-                        break;
-                    }
-                }
-
-                if (emptyCol)
-                {
-                    LeftWidth--;
-                }
-            }
-
-            for (int i = 3; i > 2; i--)
-            {
-                bool emptyCol = true;
-                for (int j = 0; j < 4; j++)
-                {
-                    if (shape[j, i])
-                    {
-                        emptyCol = false;
-                        break;
-                    }
-                }
-
-                if (emptyCol)
-                {
-                    RightWidth--;
-                }
-            }
-        }
-
-        public bool[,] Data { get; private set; }
-        public int LeftWidth { get; private set; }
-        public int RightWidth { get; private set; }
-    }
-
-    struct Piece
-    {
-        public Piece(Color color, bool[][,] shapes)
-            : this(color, shapes.OfType<bool[,]>().Select(b => new PieceShape(b)).ToArray())
-        {
-        }
-        public Piece(Color color, params PieceShape[] shapes)
-        {
-            Color = color;
-            Shapes = shapes;
-        }
-
-        public readonly Color Color;
-        public readonly PieceShape[] Shapes;
-    }
-
-    struct PieceInstance
-    {
-        public PieceInstance(Piece piece, int rotation, Point position)
-        {
-            Piece = piece;
-            Rotation = rotation % piece.Shapes.Length;
-            Position = position;
-        }
-
-        public readonly Piece Piece;
-        public readonly int Rotation;
-        public readonly Point Position;
-
-        public PieceShape Shape { get { return Piece.Shapes[Rotation]; } }
-    }
-
     struct TetrisGameState
     {
         public static SoundEffect Move;
@@ -105,10 +21,10 @@ namespace Tetris.MultiPlayer.Model
 
         public static TetrisGameState NewGameState(IPieceGenerator generator)
         {
-            return new TetrisGameState(generator, 0, 0, new PieceInstance(generator.GetPiece(), 0, new Microsoft.Xna.Framework.Point(5, 0)), generator.GetPiece(), new Color[20, 10]);
+            return new TetrisGameState(generator, 0, 0, new MovablePiece(generator.GetPiece(), 0, new Microsoft.Xna.Framework.Point(5, 0)), generator.GetPiece(), new Color[20, 10]);
         }
 
-        public TetrisGameState(IPieceGenerator generator, int rows, int points, PieceInstance current, Piece next, Color[,] grid)
+        public TetrisGameState(IPieceGenerator generator, int rows, int points, MovablePiece current, Piece next, Color[,] grid)
         {
             PieceGenerator = generator;
             Level = rows / 10;
@@ -126,14 +42,14 @@ namespace Tetris.MultiPlayer.Model
         public readonly int Level;
         public readonly int Rows;
         public readonly int Points;
-        public readonly PieceInstance CurrentPiece;
+        public readonly MovablePiece CurrentPiece;
         public readonly Piece NextPiece;
         public readonly bool IsFinished;
         public readonly Color[,] Grid;
 
         public TetrisGameState Tick()
         {
-            var nextPiece = new PieceInstance(CurrentPiece.Piece, CurrentPiece.Rotation,
+            var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X, CurrentPiece.Position.Y + 1));
             return SetCurrentPiece(nextPiece, true);
         }
@@ -141,7 +57,7 @@ namespace Tetris.MultiPlayer.Model
         public TetrisGameState MoveLeft()
         {
             Move.Play();
-            var nextPiece = new PieceInstance(CurrentPiece.Piece, CurrentPiece.Rotation,
+            var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X - 1, CurrentPiece.Position.Y));
             return SetCurrentPiece(nextPiece, false);
         }
@@ -149,7 +65,7 @@ namespace Tetris.MultiPlayer.Model
         public TetrisGameState MoveRight()
         {
             Move.Play();
-            var nextPiece = new PieceInstance(CurrentPiece.Piece, CurrentPiece.Rotation,
+            var nextPiece = new MovablePiece(CurrentPiece.Piece, CurrentPiece.Rotation,
                 new Point(CurrentPiece.Position.X + 1, CurrentPiece.Position.Y));
             return SetCurrentPiece(nextPiece, false);
         }
@@ -160,7 +76,7 @@ namespace Tetris.MultiPlayer.Model
             var nextRotation = (CurrentPiece.Rotation - 1) % CurrentPiece.Piece.Shapes.Length;
             if (nextRotation < 0)
                 nextRotation += CurrentPiece.Piece.Shapes.Length;
-            var nextPiece = new PieceInstance(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
+            var nextPiece = new MovablePiece(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
             return SetCurrentPiece(nextPiece, false);
         }
 
@@ -168,7 +84,7 @@ namespace Tetris.MultiPlayer.Model
         {
             Move.Play();
             var nextRotation = (CurrentPiece.Rotation + 1) % CurrentPiece.Piece.Shapes.Length;
-            var nextPiece = new PieceInstance(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
+            var nextPiece = new MovablePiece(CurrentPiece.Piece, nextRotation, CurrentPiece.Position);
             return SetCurrentPiece(nextPiece, false);
         }
 
@@ -194,7 +110,7 @@ namespace Tetris.MultiPlayer.Model
             return SolidifyCurrentPiece(grid);
         }
 
-        TetrisGameState SetCurrentPiece(PieceInstance currentPiece, bool autoSolidify)
+        TetrisGameState SetCurrentPiece(MovablePiece currentPiece, bool autoSolidify)
         {
             if (ValidPosition(currentPiece, Grid))
                 return new TetrisGameState(PieceGenerator, Rows, Points, currentPiece, NextPiece, Grid);
@@ -205,7 +121,7 @@ namespace Tetris.MultiPlayer.Model
             return this;
         }
 
-        static bool ValidPosition(PieceInstance livePiece, Color[,] grid)
+        static bool ValidPosition(MovablePiece livePiece, Color[,] grid)
         {
             var shape = livePiece.Shape.Data;
             for (int l = 0; l < 4; l++)
@@ -225,7 +141,6 @@ namespace Tetris.MultiPlayer.Model
 
         TetrisGameState SolidifyCurrentPiece(Color[,] grid)
         {
-            //var grid = (Color[,])Grid.Clone();
             for (int l = 0; l < 4; l++)
             {
                 for (int c = 0; c < 4; c++)
@@ -276,7 +191,7 @@ namespace Tetris.MultiPlayer.Model
                 Cleared.Play();
             Solidified.Play();
 
-            return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new PieceInstance(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
+            return new TetrisGameState(PieceGenerator, Rows + cleared, Points + points, new MovablePiece(NextPiece, 0, new Point(5, 0)), PieceGenerator.GetPiece(), grid);
         }
     }
 }

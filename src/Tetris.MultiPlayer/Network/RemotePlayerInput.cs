@@ -1,0 +1,26 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Tetris.MultiPlayer.Components;
+
+namespace Tetris.MultiPlayer.Network
+{
+    class RemotePlayerInput : IPlayerInput
+    {
+        public void Update(Microsoft.Xna.Framework.GameTime gameTime)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsPressed(InputButton button)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool WasPressed(InputButton button)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

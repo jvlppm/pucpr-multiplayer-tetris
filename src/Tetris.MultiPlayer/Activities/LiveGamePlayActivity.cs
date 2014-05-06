@@ -3,39 +3,79 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
-using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Net;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Tetris.MultiPlayer.Components;
+using Tetris.MultiPlayer.Network;
 
 namespace Tetris.MultiPlayer.Activities
 {
-    class GamePlayActivity : Activity
+    class LiveGamePlayActivity : Activity
     {
         public static SoundEffect Begin;
         public static SoundEffect Return;
 
         SpriteFont BigFont, HeaderFont, DefaultFont;
         Texture2D Background;
-        PieceRandomizer Randomizer;
 
         int Winner;
         List<TetrisBoard> PlayerBoards;
 
-        public GamePlayActivity(Game game)
+        public LiveGamePlayActivity(Game game, NetworkSession session, bool isHost)
             : base(game)
         {
-            Randomizer = new PieceRandomizer(2);
-            PlayerBoards = new List<TetrisBoard>
+            if (isHost)
             {
-                new TetrisBoard(Randomizer.GetGenerator(0), new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                new TetrisBoard(Randomizer.GetGenerator(1), new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
-            };
+                var players = session.LocalGamers.OfType<LocalNetworkGamer>();
+                var playerIds = players.Select(p => p.Id).ToArray();
+                var randomizer = new HostPieceRandomizer(playerIds);
+
+                Listen(session, randomizer, CancelOnExit);
+
+                PlayerBoards = new List<TetrisBoard>
+                {
+                    new TetrisBoard(randomizer.HostGenerator, new LocalPlayerInput()) { Location = new Point(80, 100) },
+                    new TetrisBoard(randomizer.RealClientGenerators[playerIds[0]], new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
+                };
+            }
+            else
+            {
+                PlayerBoards = new List<TetrisBoard>
+                {
+                    new TetrisBoard(new ClientPieceGenerator(1), new LocalPlayerInput()) { Location = new Point(80, 100) },
+                    new TetrisBoard(new ClientPieceGenerator(0), new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
+                };
+            }
 
             foreach (var board in PlayerBoards)
                 board.LinesCleared += LinesCleared;
+        }
+
+        async void Listen(NetworkSession session, HostPieceRandomizer pieceRandomizer, CancellationToken cancellation)
+        {
+            var reader = new PacketReader();
+            while(true)
+            {
+                foreach(var player in session.LocalGamers)
+                {
+                    if(player.IsDataAvailable)
+                    {
+                        NetworkGamer requester;
+                        player.ReceiveData(reader, out requester);
+
+                        switch(reader.ReadChar())
+                        {
+                            case 'P':
+                                var playerId = reader.ReadByte();
+                                var nextPiece = pieceRandomizer.GetGenerator(session.LocalGamers.IndexOf(player), playerId);
+                                break;
+                        }
+                    }
+                }
+            }
         }
 
         protected override void Initialize()
@@ -112,23 +152,27 @@ namespace Tetris.MultiPlayer.Activities
                 SpriteBatch.DrawString(BigFont, winnerText, new Vector2((Viewport.Width - textSize.X) / 2, 400), Color.Black);
             }
 
-            var boardWidth = Viewport.Width / PlayerBoards.Count;
-            for (var p = 0; p < PlayerBoards.Count; p++ )
+            if (PlayerBoards != null)
             {
-                var board = PlayerBoards[p];
-                string playerText = "Player " + (p + 1);
-                var pSize = HeaderFont.MeasureString(playerText);
+                var boardWidth = Viewport.Width / PlayerBoards.Count;
+                for (var p = 0; p < PlayerBoards.Count; p++)
+                {
+                    var board = PlayerBoards[p];
+                    string playerText = "Player " + (p + 1);
+                    var pSize = HeaderFont.MeasureString(playerText);
 
-                SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
+                    SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
-                string keysText = board.PlayerInput.ToString();
-                var kSize = DefaultFont.MeasureString(keysText);
+                    string keysText = board.PlayerInput.ToString();
+                    var kSize = DefaultFont.MeasureString(keysText);
 
-                SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                    SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                }
+
+                foreach (var board in PlayerBoards)
+                    board.Draw(SpriteBatch, gameTime);
             }
 
-            foreach (var board in PlayerBoards)
-                board.Draw(SpriteBatch, gameTime);
             SpriteBatch.End();
         }
     }
