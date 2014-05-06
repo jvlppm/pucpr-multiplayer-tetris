@@ -11,19 +11,18 @@ using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Activities
 {
-    class LocalGamePlayActivity : Activity
+    class GamePlayActivity : Activity
     {
         public static SoundEffect Begin;
         public static SoundEffect Return;
 
         SpriteFont BigFont, HeaderFont, DefaultFont;
         Texture2D Background;
-        PieceRandomizer Randomizer;
 
         int Winner;
-        List<TetrisBoard> PlayerBoards;
+        protected List<TetrisBoard> PlayerBoards;
 
-        public LocalGamePlayActivity(Game game)
+        public GamePlayActivity(Game game)
             : base(game)
         {
 
@@ -31,9 +30,6 @@ namespace Tetris.MultiPlayer.Activities
 
         protected override void Initialize()
         {
-            foreach (var board in PlayerBoards)
-                board.LoadContent(Content);
-
             Begin = Content.Load<SoundEffect>("scifi_laser_gun-003");
             Return = Content.Load<SoundEffect>("scifi_laser_echo-002");
 
@@ -47,18 +43,24 @@ namespace Tetris.MultiPlayer.Activities
 
         protected async override System.Threading.Tasks.Task RunActivity()
         {
-            var p1GameState = TetrisGameState.NewGameState(Randomizer.GetGenerator(0));
-            var p2GameState = TetrisGameState.NewGameState(Randomizer.GetGenerator(1));
-
-            Randomizer = new PieceRandomizer(2);
-            PlayerBoards = new List<TetrisBoard>
+            if (PlayerBoards == null)
             {
-                new TetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                new TetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
-            };
+                var randomizer = new PieceRandomizer(2);
+                var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(0));
+                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(1));
+
+                PlayerBoards = new List<TetrisBoard>
+                {
+                    new TetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
+                    new TetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
+                };
+            }
 
             foreach (var board in PlayerBoards)
+            {
+                board.LoadContent(Content);
                 board.LinesCleared += LinesCleared;
+            }
 
             Begin.Play();
             await base.RunActivity();
@@ -116,23 +118,27 @@ namespace Tetris.MultiPlayer.Activities
                 SpriteBatch.DrawString(BigFont, winnerText, new Vector2((Viewport.Width - textSize.X) / 2, 400), Color.Black);
             }
 
-            var boardWidth = Viewport.Width / PlayerBoards.Count;
-            for (var p = 0; p < PlayerBoards.Count; p++)
+            if (PlayerBoards != null)
             {
-                var board = PlayerBoards[p];
-                string playerText = "Player " + (p + 1);
-                var pSize = HeaderFont.MeasureString(playerText);
+                var boardWidth = Viewport.Width / PlayerBoards.Count;
+                for (var p = 0; p < PlayerBoards.Count; p++)
+                {
+                    var board = PlayerBoards[p];
+                    string playerText = "Player " + (p + 1);
+                    var pSize = HeaderFont.MeasureString(playerText);
 
-                SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
+                    SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
-                string keysText = board.PlayerInput.ToString();
-                var kSize = DefaultFont.MeasureString(keysText);
+                    string keysText = board.PlayerInput.ToString();
+                    var kSize = DefaultFont.MeasureString(keysText);
 
-                SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                    SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                }
+
+                foreach (var board in PlayerBoards)
+                    board.Draw(SpriteBatch, gameTime);
             }
 
-            foreach (var board in PlayerBoards)
-                board.Draw(SpriteBatch, gameTime);
             SpriteBatch.End();
         }
     }
