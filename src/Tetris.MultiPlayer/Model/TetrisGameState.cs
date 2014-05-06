@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
+using System.Threading.Tasks;
 
 namespace Tetris.MultiPlayer.Model
 {
@@ -19,9 +20,15 @@ namespace Tetris.MultiPlayer.Model
             End = content.Load<SoundEffect>("scifi_laser_echo-001");
         }
 
-        public static TetrisGameState NewGameState(IPieceGenerator generator)
+        public static async Task<TetrisGameState> NewGameState(IPieceGenerator generator)
         {
-            return new TetrisGameState(generator, 0, 0, new MovablePiece(generator.GetPiece(), 0, new Microsoft.Xna.Framework.Point(5, 0)), generator.GetPiece(), new Color[20, 10]);
+            var getP1 = generator.GetPiece();
+            var getP2 = generator.GetPiece();
+
+            await getP1;
+            await getP2;
+
+            return new TetrisGameState(generator, 0, 0, new MovablePiece(getP1.Result, 0, new Microsoft.Xna.Framework.Point(5, 0)), getP2.Result, new Color[20, 10]);
         }
 
         public TetrisGameState(IPieceGenerator generator, int rows, int points, MovablePiece current, Piece next, Color[,] grid)

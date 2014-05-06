@@ -1,31 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer
 {
     interface IPieceGenerator
     {
-        Piece GetPiece();
+        Task<Piece> GetPiece();
     }
 
     class PieceRandomizer
     {
-        public class PieceQueue : IPieceGenerator
-        {
-            PieceRandomizer _randomizer;
-            int _playerIndex;
-            public PieceQueue(PieceRandomizer randomizer, int playerIndex)
-            {
-                _randomizer = randomizer;
-                _playerIndex = playerIndex;
-            }
+        readonly static Task CompletedTask;
 
-            public Piece GetPiece()
-            {
-                return _randomizer.GetPiece(_playerIndex);
-            }
+        static PieceRandomizer()
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            tcs.SetResult(true);
+            CompletedTask = tcs.Task;
         }
 
         static Random _rng;
@@ -40,10 +34,10 @@ namespace Tetris.MultiPlayer
 
         public IPieceGenerator GetGenerator(int playerIndex)
         {
-            return new PieceQueue(this, playerIndex);
+            return new PieceGenerator(() => GetPiece(playerIndex));
         }
 
-        Piece GetPiece(int playerIndex)
+        async Task<Piece> GetPiece(int playerIndex)
         {
             if (playerIndex >= _playerPieces.Length)
                 throw new InvalidOperationException();

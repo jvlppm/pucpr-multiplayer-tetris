@@ -27,12 +27,12 @@ namespace Tetris.MultiPlayer.Components
 
         public event LinesClearedEventHandler LinesCleared;
 
-        public TetrisBoard(IPieceGenerator generator, IPlayerInput playerInput)
+        public TetrisBoard(TetrisGameState state, IPlayerInput playerInput)
         {
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
 
-            State = TetrisGameState.NewGameState(generator);
+            State = state;
             UpdateLevel();
         }
 

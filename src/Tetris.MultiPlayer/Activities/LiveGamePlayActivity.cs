@@ -24,16 +24,17 @@ namespace Tetris.MultiPlayer.Activities
         int Winner;
         List<TetrisBoard> PlayerBoards;
 
-        public LiveGamePlayActivity(Game game, NetworkSession session, bool isHost)
+        public LiveGamePlayActivity(Game game, NetworkSession session)
             : base(game)
         {
-            if (isHost)
-            {
-                var players = session.LocalGamers.OfType<LocalNetworkGamer>();
-                var playerIds = players.Select(p => p.Id).ToArray();
-                var randomizer = new HostPieceRandomizer(playerIds);
+            var players = session.LocalGamers.OfType<LocalNetworkGamer>();
+            var playerIds = players.Select(p => p.Id).ToArray();
 
-                Listen(session, randomizer, CancelOnExit);
+            if (session.IsHost)
+            {
+                var randomizer = new HostPieceRandomizer(playerIds);
+                var channel = new HostChannel(session, randomizer);
+                channel.Listen(CancelOnExit);
 
                 PlayerBoards = new List<TetrisBoard>
                 {
@@ -43,39 +44,19 @@ namespace Tetris.MultiPlayer.Activities
             }
             else
             {
+                var channel = new ClientChannel(session);
+                channel.Listen(CancelOnExit);
+                var randomizer = new ClientPieceRandomizer(channel);
+
                 PlayerBoards = new List<TetrisBoard>
                 {
-                    new TetrisBoard(new ClientPieceGenerator(1), new LocalPlayerInput()) { Location = new Point(80, 100) },
-                    new TetrisBoard(new ClientPieceGenerator(0), new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
+                    new TetrisBoard(randomizer.GetGenerator(), new LocalPlayerInput()) { Location = new Point(80, 100) },
+                    new TetrisBoard(randomizer.GetGenerator(playerIds[0]), new RemotePlayerInput()) { Location = new Point(800 - 260 - 80, 100) }
                 };
             }
 
             foreach (var board in PlayerBoards)
                 board.LinesCleared += LinesCleared;
-        }
-
-        async void Listen(NetworkSession session, HostPieceRandomizer pieceRandomizer, CancellationToken cancellation)
-        {
-            var reader = new PacketReader();
-            while(true)
-            {
-                foreach(var player in session.LocalGamers)
-                {
-                    if(player.IsDataAvailable)
-                    {
-                        NetworkGamer requester;
-                        player.ReceiveData(reader, out requester);
-
-                        switch(reader.ReadChar())
-                        {
-                            case 'P':
-                                var playerId = reader.ReadByte();
-                                var nextPiece = pieceRandomizer.GetGenerator(session.LocalGamers.IndexOf(player), playerId);
-                                break;
-                        }
-                    }
-                }
-            }
         }
 
         protected override void Initialize()

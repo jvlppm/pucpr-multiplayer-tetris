@@ -83,7 +83,10 @@
     <Compile Include="Activities\LocalGamePlayActivity.cs" />
     <Compile Include="Activities\StartScreenActivity.cs" />
     <Compile Include="Components\LinesClearedEvent.cs" />
-    <Compile Include="Network\ClientPieceGenerator.cs" />
+    <Compile Include="Model\PieceGenerator.cs" />
+    <Compile Include="Network\ClientChannel.cs" />
+    <Compile Include="Network\ClientPieceRandomizer.cs" />
+    <Compile Include="Network\HostChannel.cs" />
     <Compile Include="Network\HostPieceRandomizer.cs" />
     <Compile Include="Network\RemotePlayerInput.cs" />
     <Compile Include="Network\LocalPlayerInput.cs" />
