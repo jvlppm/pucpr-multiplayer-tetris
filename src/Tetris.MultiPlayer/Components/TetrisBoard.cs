@@ -1,19 +1,20 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
+﻿using Jv.Games.Xna.Async.Core;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using Tetris.MultiPlayer.Model;
+using System.Threading.Tasks;
 using Tetris.MultiPlayer.Helpers;
+using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Components
 {
     class TetrisBoard
     {
         bool _updating;
+        AsyncContext _updateContext;
 
         Texture2D _squareSprite, _boardBackground;
         SpriteFont _statsFont;
@@ -23,18 +24,17 @@ namespace Tetris.MultiPlayer.Components
 
         TimeSpan CurrentTickTime;
         TimeSpan KeyTickTime;
-
-        public TetrisGameState State;
         TimeSpan _gravityTickTimeCount;
-
-        public IPlayerInput PlayerInput;
         Dictionary<InputButton, TimeSpan> PressTime;
 
+        public TetrisGameState State;
+        public IPlayerInput PlayerInput;
         public event LinesClearedEventHandler LinesCleared;
 
         public TetrisBoard(TetrisGameState state, IPlayerInput playerInput)
         {
             _updateMutex = new MutexAsync();
+            _updateContext = new AsyncContext();
 
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
@@ -54,12 +54,16 @@ namespace Tetris.MultiPlayer.Components
 
         #region Update
 
-        //TODO: UpdateContext
-        public async Task Update(GameTime gameTime)
+        public void Update(GameTime gameTime)
         {
             if (_updating || State.IsFinished)
                 return;
 
+            _updateContext.Send(SyncUpdate, gameTime);
+        }
+
+        async void SyncUpdate(GameTime gameTime)
+        {
             _updating = true;
 
             using (await _updateMutex.WaitAsync())
@@ -228,7 +232,7 @@ namespace Tetris.MultiPlayer.Components
             if (LinesCleared != null)
                 LinesCleared(this, new LinesClearedEventArgs(lines));
         }
-        public async Task MoveLinesUp(int count)
+        public async void MoveLinesUp(int count)
         {
             using (await _updateMutex.WaitAsync())
                 State = await State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
