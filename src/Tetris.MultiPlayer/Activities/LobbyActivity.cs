@@ -1,5 +1,6 @@
 ﻿using Jv.Games.Xna.Async;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Net;
 using System;
 using System.Linq;
@@ -13,6 +14,10 @@ namespace Tetris.MultiPlayer.Activities
     {
         bool _waitAsHost;
         MenuInput _menuInput;
+        Texture2D Background;
+        SpriteFont BigFont;
+        string _message;
+        Vector2 _messagePosition;
 
         public LobbyActivity(Game game, bool waitAsHost)
             : base(game)
@@ -28,7 +33,32 @@ namespace Tetris.MultiPlayer.Activities
             else
                 WaitAsPlayer(CancelOnExit);
 
+            AnimateMessage(CancelOnExit);
+
             return base.RunActivity();
+        }
+
+        async void AnimateMessage(CancellationToken cancellation)
+        {
+            TimeSpan delay = TimeSpan.FromSeconds(0.5);
+            int count = 0;
+            string message = "Waiting";
+
+            var textSize = BigFont.MeasureString(message);
+            _messagePosition = new Vector2((Viewport.Width - textSize.X), (Viewport.Height - textSize.Y)) / 2;
+
+            while(!cancellation.IsCancellationRequested)
+            {
+                _message = "Waiting" + new string('.', count = (count + 1) % 4);
+                await TaskEx.Delay(delay);
+            }
+        }
+
+        protected override void Initialize()
+        {
+            Background = Content.Load<Texture2D>("Background");
+            BigFont = Content.Load<SpriteFont>("BigFont");
+            base.Initialize();
         }
 
         void WaitAsHost(CancellationToken cancellationToken)
@@ -57,19 +87,23 @@ namespace Tetris.MultiPlayer.Activities
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var host = NetworkSession.Find(NetworkSessionType.SystemLink, 1, null).FirstOrDefault();
+                var host = await Task.Factory.StartNew(() => NetworkSession.Find(NetworkSessionType.SystemLink, 1, null).FirstOrDefault());
                 if(host != null)
                 {
                     Exit(NetworkSession.Join(host));
                     return;
                 }
 
-                await TaskEx.Delay(TimeSpan.FromSeconds(0.5));
+                await TaskEx.Delay(TimeSpan.FromSeconds(1));
             }
         }
 
         protected override void Draw(Microsoft.Xna.Framework.GameTime gameTime)
         {
+            SpriteBatch.Begin();
+            SpriteBatch.Draw(Background, SpriteBatch.GraphicsDevice.Viewport.Bounds, Color.White);
+            SpriteBatch.DrawString(BigFont, _message, _messagePosition, Color.Black);
+            SpriteBatch.End();
         }
 
         protected override void Update(Microsoft.Xna.Framework.GameTime gameTime)
