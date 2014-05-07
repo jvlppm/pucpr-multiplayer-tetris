@@ -79,10 +79,14 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Activities\DialogActivity.cs" />
     <Compile Include="Activities\LiveGamePlayActivity.cs" />
-    <Compile Include="Activities\LocalGamePlayActivity.cs" />
+    <Compile Include="Activities\GamePlayActivity.cs" />
+    <Compile Include="Activities\LobbyActivity.cs" />
     <Compile Include="Activities\StartScreenActivity.cs" />
     <Compile Include="Components\LinesClearedEvent.cs" />
+    <Compile Include="Components\MenuInput.cs" />
+    <Compile Include="Helpers\AsyncOperation.cs" />
     <Compile Include="Helpers\MutexAsync.cs" />
     <Compile Include="Helpers\SemaphoreAsync.cs" />
     <Compile Include="Model\PieceGenerator.cs" />

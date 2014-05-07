@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using System.Threading.Tasks;
 using Tetris.MultiPlayer.Activities;
 using Microsoft.Xna.Framework.Media;
+using Microsoft.Xna.Framework.GamerServices;
 
 namespace Tetris.MultiPlayer
 {
@@ -21,6 +22,8 @@ namespace Tetris.MultiPlayer
                 PreferredBackBufferWidth = 800,
                 PreferredBackBufferHeight = 520
             };
+
+            Components.Add(new GamerServicesComponent(this));
         }
 
         protected override void Initialize()
@@ -39,12 +42,21 @@ namespace Tetris.MultiPlayer
             {
                 while (true)
                 {
-                    switch (await activity.Run(new StartScreenActivity(this)))
+                    var result = await activity.Run(new StartScreenActivity(this));
+                    switch (result)
                     {
                         case StartScreenActivity.Result.Exit:
                             return;
                         case StartScreenActivity.Result.Local:
                             await activity.Run<GamePlayActivity>();
+                            break;
+                        case StartScreenActivity.Result.WaitAsHost:
+                        case StartScreenActivity.Result.WaitAsPlayer:
+                            bool isHost = result == StartScreenActivity.Result.WaitAsHost;
+
+                            var session = await activity.Run(new LobbyActivity(this, isHost));
+                            if(session != null)
+                                await activity.Run<NetworkGamePlayActivity>(session);
                             break;
                         default:
                             throw new NotImplementedException();

@@ -52,6 +52,8 @@ namespace Tetris.MultiPlayer.Components
         {
             _oldState = _state;
             _state = GetState();
+            if (_oldState == null)
+                _oldState = _state;
         }
 
         IDictionary<InputButton, bool> GetState()
@@ -138,6 +140,19 @@ namespace Tetris.MultiPlayer.Components
                 return "Move: A, D - Speed: S - Rotate: W, Q";
 
             return "Move: Arrows - Rotate: Up, Enter";
+        }
+    }
+
+    static class PlayerInputExtensions
+    {
+        public static bool Press(this IPlayerInput input, InputButton button)
+        {
+            return !input.WasPressed(button) && input.IsPressed(button);
+        }
+
+        public static bool Release(this IPlayerInput input, InputButton button)
+        {
+            return input.WasPressed(button) && !input.IsPressed(button);
         }
     }
 }
