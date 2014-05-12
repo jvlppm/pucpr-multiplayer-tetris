@@ -85,6 +85,9 @@ namespace Tetris.MultiPlayer.Activities
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            if (PlayerBoards == null)
+                return;
+
             if (Winner <= 0)
             {
                 if (PlayerBoards.All(b => b.State.IsFinished))

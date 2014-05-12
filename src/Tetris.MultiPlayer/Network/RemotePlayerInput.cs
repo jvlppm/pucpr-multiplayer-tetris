@@ -10,17 +10,17 @@ namespace Tetris.MultiPlayer.Network
     {
         public void Update(Microsoft.Xna.Framework.GameTime gameTime)
         {
-            throw new NotImplementedException();
+
         }
 
         public bool IsPressed(InputButton button)
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool WasPressed(InputButton button)
         {
-            throw new NotImplementedException();
+            return false;
         }
     }
 }

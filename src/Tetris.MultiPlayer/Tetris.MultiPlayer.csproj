@@ -92,6 +92,7 @@
     <Compile Include="Model\PieceGenerator.cs" />
     <Compile Include="Network\ClientChannel.cs" />
     <Compile Include="Network\ClientPieceRandomizer.cs" />
+    <Compile Include="Network\Extensions.cs" />
     <Compile Include="Network\HostChannel.cs" />
     <Compile Include="Network\HostPieceRandomizer.cs" />
     <Compile Include="Network\RemotePlayerInput.cs" />

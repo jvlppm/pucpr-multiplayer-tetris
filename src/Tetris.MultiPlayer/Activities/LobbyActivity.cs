@@ -61,7 +61,7 @@ namespace Tetris.MultiPlayer.Activities
             base.Initialize();
         }
 
-        void WaitAsHost(CancellationToken cancellationToken)
+        async void WaitAsHost(CancellationToken cancellationToken)
         {
             var session = NetworkSession.Create(NetworkSessionType.SystemLink, 1, 2);
             EventHandler<GamerJoinedEventArgs> gamerJoined = null;
@@ -70,8 +70,13 @@ namespace Tetris.MultiPlayer.Activities
             {
                 if (e.Gamer.IsHost)
                     return;
-                validSession = true;
-                Exit(session);
+
+                session.GameStarted += delegate
+                {
+                    validSession = true;
+                    Exit(session);
+                };
+                session.StartGame();
             };
             session.GamerJoined += gamerJoined;
 
@@ -81,6 +86,12 @@ namespace Tetris.MultiPlayer.Activities
                     session.Dispose();
                 session.GamerJoined -= gamerJoined;
             });
+
+            while(!cancellationToken.IsCancellationRequested)
+            {
+                await TaskEx.Delay(TimeSpan.FromMilliseconds(200));
+                session.Update();
+            }
         }
 
         async void WaitAsPlayer(CancellationToken cancellationToken)
@@ -90,7 +101,14 @@ namespace Tetris.MultiPlayer.Activities
                 var host = await Task.Factory.StartNew(() => NetworkSession.Find(NetworkSessionType.SystemLink, 1, null).FirstOrDefault());
                 if(host != null)
                 {
-                    Exit(NetworkSession.Join(host));
+                    var session = NetworkSession.Join(host);
+                    session.GameStarted += delegate { Exit(session); };
+
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        session.Update();
+                        await TaskEx.Delay(TimeSpan.FromMilliseconds(200));
+                    }
                     return;
                 }
 

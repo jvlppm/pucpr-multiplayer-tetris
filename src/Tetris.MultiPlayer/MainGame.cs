@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Tetris.MultiPlayer.Activities;
 using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.GamerServices;
+using System.IO;
 
 namespace Tetris.MultiPlayer
 {
@@ -16,14 +17,21 @@ namespace Tetris.MultiPlayer
 
         public MainGame()
         {
-            Content.RootDirectory = "Content";
-            Graphics = new GraphicsDeviceManager(this)
+            try
             {
-                PreferredBackBufferWidth = 800,
-                PreferredBackBufferHeight = 520
-            };
+                Content.RootDirectory = "Content";
+                Graphics = new GraphicsDeviceManager(this)
+                {
+                    PreferredBackBufferWidth = 800,
+                    PreferredBackBufferHeight = 520
+                };
 
-            Components.Add(new GamerServicesComponent(this));
+                Components.Add(new GamerServicesComponent(this));
+            }
+            catch (Exception ex)
+            {
+                File.WriteAllText("error.txt", ex.ToString());
+            }
         }
 
         protected override void Initialize()
