@@ -11,9 +11,13 @@ namespace Tetris.MultiPlayer.Network
 {
     class ClientChannel
     {
+        /// Solicitar 3 peças: P -> p 3 0 7 5
+
         public readonly NetworkSession Session;
         public readonly LocalNetworkGamer Me;
         public readonly NetworkGamer Host;
+
+        TaskCompletionSource<Piece[]> _getPieceRequest;
 
         public ClientChannel(NetworkSession session)
         {
@@ -23,6 +27,7 @@ namespace Tetris.MultiPlayer.Network
             Me = Session.LocalGamers[0];
             Host = Session.AllGamers.FirstOrDefault((NetworkGamer g) => g.IsHost);
         }
+
 
         public async void Listen(CancellationToken cancellation)
         {
@@ -36,6 +41,14 @@ namespace Tetris.MultiPlayer.Network
 
                     switch (reader.ReadChar())
                     {
+                        case 'p':
+                            if (_getPieceRequest != null)
+                            {
+                                _getPieceRequest.TrySetResult(Enumerable.Range(0, (int)reader.ReadByte()).Select(i => Pieces.All[(int)reader.ReadByte()]).ToArray());
+                                _getPieceRequest = null;
+                            }
+                            break;
+
                         case 'H':
                             break;
                     }
@@ -48,11 +61,11 @@ namespace Tetris.MultiPlayer.Network
 
         public Task<Piece[]> GetNextPieces(int count)
         {
-            var tcs = new TaskCompletionSource<Piece[]>();
+            _getPieceRequest = new TaskCompletionSource<Piece[]>();
             Me.SendData(new byte[] { (byte)'P' }, SendDataOptions.Reliable, Host);
             Session.Update();
 
-            return tcs.Task;
+            return _getPieceRequest.Task;
         }
     }
 }
