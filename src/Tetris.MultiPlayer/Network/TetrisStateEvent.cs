@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Tetris.MultiPlayer.Network
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    /*[StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct TetrisStateInfo
     {
         public int Rows;
@@ -30,5 +30,5 @@ namespace Tetris.MultiPlayer.Network
         }
     }
 
-    public delegate void TetrisStateEventHandler(object sender, TetrisStateEventArgs args);
+    public delegate void TetrisStateEventHandler(object sender, TetrisStateEventArgs args);*/
 }

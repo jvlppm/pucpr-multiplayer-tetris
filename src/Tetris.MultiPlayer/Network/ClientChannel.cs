@@ -18,8 +18,6 @@ namespace Tetris.MultiPlayer.Network
 
         TaskCompletionSource<Piece[]> _getPieceRequest;
 
-        public event TetrisStateEventHandler TetrisStateChanged;
-
         public ClientChannel(NetworkSession session)
         {
             if (session.IsHost)
@@ -29,15 +27,14 @@ namespace Tetris.MultiPlayer.Network
             Host = Session.AllGamers.FirstOrDefault((NetworkGamer g) => g.IsHost);
         }
 
-        static T ByteArrayToStructure<T>(byte[] bytes) where T : struct
+        /*static T ByteArrayToStructure<T>(byte[] bytes) where T : struct
         {
             GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
             T stuff = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(),
                 typeof(T));
             handle.Free();
             return stuff;
-        }
-
+        }*/
 
         public async void Listen(CancellationToken cancellation)
         {
@@ -62,7 +59,7 @@ namespace Tetris.MultiPlayer.Network
                             }
                             break;
 
-                        case 't':
+                        /*case 't':
                             var buffer = new byte[Marshal.SizeOf(typeof(TetrisStateInfo))];
                             reader.Read(buffer, 0, buffer.Length);
                             var hostState = ByteArrayToStructure<TetrisStateInfo>(buffer);
@@ -71,7 +68,7 @@ namespace Tetris.MultiPlayer.Network
 
                             if (TetrisStateChanged != null)
                                 TetrisStateChanged(this, new TetrisStateEventArgs(hostState, localState));
-                            break;
+                            break;*/
                     }
                 }
 
@@ -80,6 +77,11 @@ namespace Tetris.MultiPlayer.Network
             }
         }
 
+        /// <summary>
+        /// Solicita as próximas peças ao servidor
+        /// </summary>
+        /// <param name="count">Quantas peças devem ser geradas</param>
+        /// <returns></returns>
         public Task<Piece[]> GetNextPieces(int count)
         {
             _getPieceRequest = new TaskCompletionSource<Piece[]>();

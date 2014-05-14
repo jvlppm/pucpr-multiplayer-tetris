@@ -38,10 +38,15 @@ namespace Tetris.MultiPlayer.Activities
                 var p1GameState = TetrisGameState.NewGameState(randomizer.HostGenerator);
                 var p2GameState = TetrisGameState.NewGameState(randomizer.RealClientGenerators[playerIds[0]]);
 
-                PlayerBoards = new List<TetrisBoard>
+                //server: p2 solidificou?
+                //        espera Xms, manda
+                //     client: recebeu solid, força solid, continua
+                //server: recebeu xy, seta, 
+
+                PlayerBoards = new List<LocalTetrisBoard>
                 {
-                    new TetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
-                    new TetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
+                    new LocalTetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
+                    new LocalTetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
                 };
             }
             else
@@ -50,20 +55,20 @@ namespace Tetris.MultiPlayer.Activities
                 channel.Listen(CancelOnExit);
                 var randomizer = new ClientPieceRandomizer(channel);
 
-                channel.TetrisStateChanged += (s, e) =>
+                /*channel.TetrisStateChanged += (s, e) =>
                 {
                     //randomizer clear queue, add infos
-                };
+                };*/
 
                 
 
                 var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
                 var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(channel.Host.Id));
 
-                PlayerBoards = new List<TetrisBoard>
+                PlayerBoards = new List<LocalTetrisBoard>
                 {
-                    new TetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
-                    new TetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
+                    new LocalTetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
+                    new LocalTetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
                 };
             }
 

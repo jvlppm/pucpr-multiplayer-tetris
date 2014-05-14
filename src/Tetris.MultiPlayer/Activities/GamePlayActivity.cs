@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace Tetris.MultiPlayer.Activities
 {
     class GamePlayActivity : Activity
     {
+        Random Random = new Random(Environment.TickCount);
+
         public static SoundEffect Begin;
         public static SoundEffect Return;
 
@@ -20,7 +23,7 @@ namespace Tetris.MultiPlayer.Activities
         Texture2D Background;
 
         int Winner;
-        protected List<TetrisBoard> PlayerBoards;
+        protected IEnumerable<BaseTetrisBoard> PlayerBoards;
 
         public GamePlayActivity(Game game)
             : base(game)
@@ -49,17 +52,17 @@ namespace Tetris.MultiPlayer.Activities
                 var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(0));
                 var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(1));
 
-                PlayerBoards = new List<TetrisBoard>
+                PlayerBoards = new List<LocalTetrisBoard>
                 {
-                    new TetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                    new TetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
+                    new LocalTetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
+                    new LocalTetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
                 };
             }
 
             foreach (var board in PlayerBoards)
             {
                 board.LoadContent(Content);
-                board.LinesCleared += LinesCleared;
+                //board.LinesCleared += LinesCleared;
             }
 
             Begin.Play();
@@ -67,18 +70,18 @@ namespace Tetris.MultiPlayer.Activities
             Return.Play();
         }
 
-        void LinesCleared(object sender, LinesClearedEventArgs e)
+        /*void LinesCleared(object sender, LinesClearedEventArgs e)
         {
-            var board = (TetrisBoard)sender;
+            var board = (LocalTetrisBoard)sender;
             if (e.Lines <= 1)
                 return;
 
             foreach (var b in PlayerBoards)
             {
-                if (b != board && !b.State.IsFinished)
-                    b.MoveLinesUp(e.Lines);
+                if (b != board && !b.State.Value.IsFinished)
+                    b.State = b.State.Value.MoveLinesUp(e.Lines, Random.Next(10));
             }
-        }
+        }*/
 
         protected override void Update(Microsoft.Xna.Framework.GameTime gameTime)
         {
@@ -90,17 +93,17 @@ namespace Tetris.MultiPlayer.Activities
 
             if (Winner <= 0)
             {
-                if (PlayerBoards.All(b => b.State.IsFinished))
+                if (PlayerBoards.All(b => b.State != null && b.State.Value.IsFinished))
                 {
-                    var winner = PlayerBoards.OrderBy(b => b.State.Points).LastOrDefault();
+                    var winner = PlayerBoards.OrderBy(b => b.State == null? 0 : b.State.Value.Points).LastOrDefault();
                     if (winner != null)
                         Winner = PlayerBoards.IndexOf(winner) + 1;
                 }
                 else
                 {
-                    var remaining = PlayerBoards.Where(b => !b.State.IsFinished).ToArray();
+                    var remaining = PlayerBoards.Where(b => b.State == null || !b.State.Value.IsFinished).ToArray();
                     var last = remaining.Length == 1 ? remaining[0] : null;
-                    if (last != null && PlayerBoards.All(b => b == last || b.State.Points < last.State.Points))
+                    if (last != null && last.State != null && PlayerBoards.All(b => b == last || (b.State != null && b.State.Value.Points < last.State.Value.Points)))
                         Winner = PlayerBoards.IndexOf(last) + 1;
                 }
             }
@@ -123,19 +126,21 @@ namespace Tetris.MultiPlayer.Activities
 
             if (PlayerBoards != null)
             {
-                var boardWidth = Viewport.Width / PlayerBoards.Count;
-                for (var p = 0; p < PlayerBoards.Count; p++)
+                var boardWidth = Viewport.Width / PlayerBoards.Count();
+                int p = 0;
+                foreach(var board in PlayerBoards)
                 {
-                    var board = PlayerBoards[p];
                     string playerText = "Player " + (p + 1);
                     var pSize = HeaderFont.MeasureString(playerText);
 
                     SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
-                    string keysText = board.PlayerInput.ToString();
-                    var kSize = DefaultFont.MeasureString(keysText);
+                    //string keysText = board.PlayerInput.ToString();
+                    //var kSize = DefaultFont.MeasureString(keysText);
 
-                    SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                    //SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+
+                    p++;
                 }
 
                 foreach (var board in PlayerBoards)

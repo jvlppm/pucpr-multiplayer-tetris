@@ -11,59 +11,53 @@ using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Components
 {
-    class TetrisBoard
+    class LocalTetrisBoard : BaseTetrisBoard
     {
-        bool _updating;
-        AsyncContext _updateContext;
-
-        Texture2D _squareSprite, _boardBackground;
-        SpriteFont _statsFont;
-        MutexAsync _updateMutex;
-
-        public Point Location;
-
         TimeSpan CurrentTickTime;
         TimeSpan KeyTickTime;
         TimeSpan _gravityTickTimeCount;
         Dictionary<InputButton, TimeSpan> PressTime;
 
-        public TetrisGameState State;
+        bool _updating;
+        MutexAsync _updateMutex;
+
+        new TetrisGameState? State
+        {
+            get { return base.State; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException();
+
+                var oldRows = base.State == null? 0 : base.State.Value.Rows;
+                base.State = value;
+                UpdateLevel(value.Value.Level + 1);
+
+                var clearedRows = value.Value.Rows - oldRows;
+                if (clearedRows > 0)
+                    FireLinesCleared(clearedRows);
+            }
+        }
+
         public IPlayerInput PlayerInput;
         public event LinesClearedEventHandler LinesCleared;
 
-        public TetrisBoard(TetrisGameState state, IPlayerInput playerInput)
+        public LocalTetrisBoard(TetrisGameState state, IPlayerInput playerInput)
         {
-            _updateMutex = new MutexAsync();
-            _updateContext = new AsyncContext();
-
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
-
             State = state;
-            UpdateLevel();
-        }
-
-        public void LoadContent(ContentManager content)
-        {
-            TetrisGameState.LoadContent(content);
-
-            _squareSprite = content.Load<Texture2D>("PieceBlock");
-            _boardBackground = content.Load<Texture2D>("BoardBackground");
-            _statsFont = content.Load<SpriteFont>("DefaultFont");
         }
 
         #region Update
 
-        public void Update(GameTime gameTime)
+        protected override async void SyncUpdate(GameTime gameTime)
         {
-            if (_updating || State.IsFinished)
+            var currentState = State;
+            if (currentState == null)
                 return;
+            var state = currentState.Value;
 
-            _updateContext.Send(SyncUpdate, gameTime);
-        }
-
-        async void SyncUpdate(GameTime gameTime)
-        {
             _updating = true;
 
             using (await _updateMutex.WaitAsync())
@@ -76,23 +70,22 @@ namespace Tetris.MultiPlayer.Components
                 foreach (var button in PressTime.Keys.ToArray())
                     PressTime[button] += gameTime.ElapsedGameTime;
 
-                if (Press(InputButton.Left))
-                    State = State.MoveLeft();
-                if (Press(InputButton.Right))
-                    State = State.MoveRight();
-                if (Press(InputButton.Down))
+                if (IsPressing(InputButton.Left))
+                    State = state.MoveLeft();
+                if (IsPressing(InputButton.Right))
+                    State = state.MoveRight();
+                if (IsPressing(InputButton.Down))
                     forceTick = true;
-                if (Press(InputButton.RotateCW))
-                    State = State.RotateClockwise();
-                if (Press(InputButton.RotateCCW))
-                    State = State.RotateCounterClockwise();
+                if (IsPressing(InputButton.RotateCW))
+                    State = state.RotateClockwise();
+                if (IsPressing(InputButton.RotateCCW))
+                    State = state.RotateCounterClockwise();
 
                 if (_gravityTickTimeCount > CurrentTickTime || forceTick)
                 {
-                    var oldRows = State.Rows;
-                    State = await State.Tick();
-                    UpdateLevel();
-                    var clearedRows = State.Rows - oldRows;
+                    var oldRows = state.Rows;
+                    State = await state.Tick();
+                    var clearedRows = state.Rows - oldRows;
                     if (clearedRows > 0)
                         FireLinesCleared(clearedRows);
 
@@ -105,110 +98,15 @@ namespace Tetris.MultiPlayer.Components
             _updating = false;
         }
 
-        void UpdateLevel()
+        void UpdateLevel(int level)
         {
-            var level = State.Level + 1;
             var tick = Math.Pow((0.8 - ((level - 1) * 0.007)), (level - 1));
             CurrentTickTime = TimeSpan.FromSeconds(tick);
             KeyTickTime = TimeSpan.FromSeconds(tick / 5);
         }
         #endregion
 
-        #region Draw
-        public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
-        {
-            spriteBatch.Draw(_boardBackground, new Vector2(Location.X, Location.Y), Color.White);
-
-            var gridOffset = new Vector2(1, 1);
-
-            DrawCurrentPiece(spriteBatch, gridOffset);
-            DrawGrid(spriteBatch, gridOffset);
-
-            DrawNextPiece(spriteBatch);
-            DrawInfo(spriteBatch);
-        }
-
-        void DrawCurrentPiece(SpriteBatch spriteBatch, Vector2 position)
-        {
-            var currentPiece = State.CurrentPiece.Shape.Data;
-            var piecePos = State.CurrentPiece.Position;
-
-            for (int l = 0; l < 4; l++)
-            {
-                for (int c = 0; c < 4; c++)
-                {
-                    if (currentPiece[l, c])
-                    {
-                        var rowPos = piecePos.Y + l - 1;
-                        if (rowPos < 0 || rowPos >= 20) continue;
-
-                        var colPos = piecePos.X + c - 2;
-                        if (colPos < 0 || colPos >= 10) continue;
-
-                        spriteBatch.Draw(_squareSprite,
-                            new Vector2(
-                                Location.X + position.X + colPos * _squareSprite.Width,
-                                Location.Y + position.Y + rowPos * _squareSprite.Height
-                            ), State.CurrentPiece.Piece.Color);
-                    }
-                }
-            }
-        }
-
-        void DrawGrid(SpriteBatch spriteBatch, Vector2 position)
-        {
-            for (int l = 0; l < 20; l++)
-            {
-                for (int c = 0; c < 10; c++)
-                {
-                    if (State.Grid[l, c] != Color.Transparent)
-                    {
-                        spriteBatch.Draw(_squareSprite,
-                            new Vector2(
-                                    Location.X + position.X + c * _squareSprite.Width,
-                                    Location.Y + position.Y + l * _squareSprite.Height
-                                ), State.Grid[l, c]);
-                    }
-                }
-            }
-        }
-
-        void DrawInfo(SpriteBatch spriteBatch)
-        {
-            spriteBatch.DrawString(_statsFont, "Pontos:", new Vector2(Location.X + 165, Location.Y + 10), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Points.ToString("#,##0").PadLeft(13), new Vector2(Location.X + 165, Location.Y + 30), Color.Black);
-
-            spriteBatch.DrawString(_statsFont, "Linhas:", new Vector2(Location.X + 165, Location.Y + 90), Color.Black);
-            spriteBatch.DrawString(_statsFont, State.Rows.ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 90), Color.Black);
-
-            spriteBatch.DrawString(_statsFont, "Level:", new Vector2(Location.X + 165, Location.Y + 110), Color.Black);
-            spriteBatch.DrawString(_statsFont, (State.Level + 1).ToString().PadLeft(5), new Vector2(Location.X + 228, Location.Y + 110), Color.Black);
-        }
-
-        void DrawNextPiece(SpriteBatch spriteBatch)
-        {
-            if (State.IsFinished)
-                return;
-
-            spriteBatch.DrawString(_statsFont, "Próxima:", new Vector2(Location.X + 165, Location.Y + 155), Color.Black);
-            var nextPieceShape = State.NextPiece.Shapes[0].Data;
-
-            for (int l = 0; l < 4; l++)
-            {
-                for (int c = 0; c < 4; c++)
-                {
-                    if (nextPieceShape[l, c])
-                        spriteBatch.Draw(_squareSprite,
-                            new Vector2(
-                                Location.X + 180 + (c) * _squareSprite.Width,
-                                Location.Y + 180 + (l) * _squareSprite.Height
-                            ), State.NextPiece.Color);
-                }
-            }
-        }
-        #endregion
-
-        bool Press(InputButton button)
+        bool IsPressing(InputButton button)
         {
             if (!PlayerInput.IsPressed(button))
             {
@@ -232,10 +130,10 @@ namespace Tetris.MultiPlayer.Components
             if (LinesCleared != null)
                 LinesCleared(this, new LinesClearedEventArgs(lines));
         }
-        public async void MoveLinesUp(int count)
+        /*public async void MoveLinesUp(int count)
         {
             using (await _updateMutex.WaitAsync())
                 State = await State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
-        }
+        }*/
     }
 }

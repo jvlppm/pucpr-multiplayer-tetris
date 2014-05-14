@@ -86,6 +86,8 @@
     <Compile Include="Activities\StartScreenActivity.cs" />
     <Compile Include="Components\LinesClearedEvent.cs" />
     <Compile Include="Components\MenuInput.cs" />
+    <Compile Include="Components\BaseTetrisBoard.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Helpers\AsyncOperation.cs" />
     <Compile Include="Helpers\MutexAsync.cs" />
     <Compile Include="Helpers\SemaphoreAsync.cs" />
