@@ -15,6 +15,8 @@ namespace Tetris.MultiPlayer.Network
         public readonly HostPieceRandomizer _pieceRandomizer;
         public readonly LocalNetworkGamer Me;
 
+        TaskCompletionSource<bool> _clientReadyCompletion;
+
         public HostChannel(NetworkSession session, HostPieceRandomizer randomizer)
         {
             if (!session.IsHost)
@@ -23,6 +25,12 @@ namespace Tetris.MultiPlayer.Network
             Session = session;
             Me = Session.LocalGamers[0];
             _pieceRandomizer = randomizer;
+            _clientReadyCompletion = new TaskCompletionSource<bool>();
+        }
+
+        public Task WaitClientReadyAsync()
+        {
+            return _clientReadyCompletion.Task;
         }
 
         public async void Listen(CancellationToken cancellation)
@@ -38,7 +46,6 @@ namespace Tetris.MultiPlayer.Network
                     switch (reader.ReadChar())
                     {
                         case 'P':
-                            // TODO: Dado está chegando aqui, falta responder
                             var quantity = reader.ReadByte();
                             var pieces = Enumerable.Range(0, quantity).Select(i =>
                                     _pieceRandomizer.RemoteClientGenerators[requester.Id].GetPiece().Result);
@@ -46,12 +53,13 @@ namespace Tetris.MultiPlayer.Network
                             var response = pieces.Select(p => AllPieces.IndexOf(p));
 
                             var writer = new PacketWriter();
-                            writer.Write('P');
+                            writer.Write('p');
                             writer.Write(quantity);
                             foreach (var pIndex in response)
-                                writer.Write(pIndex);
+                                writer.Write((byte)pIndex);
 
                             Me.SendData(writer, SendDataOptions.Reliable);
+                            _clientReadyCompletion.SetResult(true);
                             break;
                     }
                 }

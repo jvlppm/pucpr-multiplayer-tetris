@@ -21,17 +21,19 @@ namespace Tetris.MultiPlayer.Activities
 
         protected async override Task RunActivity()
         {
-            var players = _session.LocalGamers.OfType<LocalNetworkGamer>();
-            var playerIds = players.Select(p => p.Id).ToArray();
+            var players = _session.AllGamers.OfType<NetworkGamer>();
 
             var p1BoardLocation = new Point(80, 100);
             var p2BoardLocation = new Point(800 - 260 - 80, 100);
 
             if (_session.IsHost)
             {
+                var playerIds = players.Where(i => !i.IsHost).Select(i => i.Id).ToArray();
                 var randomizer = new HostPieceRandomizer(playerIds);
                 var channel = new HostChannel(_session, randomizer);
                 channel.Listen(CancelOnExit);
+
+                await channel.WaitClientReadyAsync();
 
                 var p1GameState = TetrisGameState.NewGameState(randomizer.HostGenerator);
                 var p2GameState = TetrisGameState.NewGameState(randomizer.RealClientGenerators[playerIds[0]]);
@@ -48,8 +50,15 @@ namespace Tetris.MultiPlayer.Activities
                 channel.Listen(CancelOnExit);
                 var randomizer = new ClientPieceRandomizer(channel);
 
+                channel.TetrisStateChanged += (s, e) =>
+                {
+                    //randomizer clear queue, add infos
+                };
+
+                
+
                 var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
-                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(playerIds[0]));
+                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(channel.Host.Id));
 
                 PlayerBoards = new List<TetrisBoard>
                 {

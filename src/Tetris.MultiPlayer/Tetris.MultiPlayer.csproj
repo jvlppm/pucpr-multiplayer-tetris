@@ -103,6 +103,7 @@
     <Compile Include="Model\Pieces.cs" />
     <Compile Include="Components\PlayerInput.cs" />
     <Compile Include="Model\PieceShape.cs" />
+    <Compile Include="Network\TetrisStateEvent.cs" />
     <Compile Include="PieceRandomizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />

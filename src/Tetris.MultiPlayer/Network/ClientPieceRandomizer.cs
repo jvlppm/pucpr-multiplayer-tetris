@@ -17,8 +17,8 @@ namespace Tetris.MultiPlayer.Network
         public ClientPieceRandomizer(ClientChannel channel)
         {
             _channel = channel;
-            var players = _channel.Session.LocalGamers.OfType<LocalNetworkGamer>();
-            var playerIds = players.Select(p => p.Id).ToArray();
+            var players = _channel.Session.AllGamers.OfType<NetworkGamer>();
+            var playerIds = players.Where(p => p != _channel.Me).Select(p => p.Id).ToArray();
 
             _myPieces = new Queue<Task<Piece>>();
             _playerPieces = Enumerable.Range(0, playerIds.Length).ToDictionary(
