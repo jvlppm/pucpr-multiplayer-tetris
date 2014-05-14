@@ -12,7 +12,7 @@ using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Activities
 {
-    class GamePlayActivity : Activity
+    abstract class GamePlayActivity : Activity
     {
         Random Random = new Random(Environment.TickCount);
 
@@ -44,20 +44,11 @@ namespace Tetris.MultiPlayer.Activities
             base.Initialize();
         }
 
+        protected abstract Task InitializePlayerBoards();
+
         protected async override System.Threading.Tasks.Task RunActivity()
         {
-            if (PlayerBoards == null)
-            {
-                var randomizer = new PieceRandomizer(2);
-                var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(0));
-                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(1));
-
-                PlayerBoards = new List<LocalTetrisBoard>
-                {
-                    new LocalTetrisBoard(await p1GameState, new PlayerInput(PlayerIndex.One)) { Location = new Point(80, 100) },
-                    new LocalTetrisBoard(await p2GameState, new PlayerInput(PlayerIndex.Two)) { Location = new Point(800 - 260 - 80, 100) }
-                };
-            }
+            
 
             foreach (var board in PlayerBoards)
             {
@@ -83,6 +74,7 @@ namespace Tetris.MultiPlayer.Activities
             }
         }*/
 
+        // Valida vencedor, e atualiza boards
         protected override void Update(Microsoft.Xna.Framework.GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -135,10 +127,10 @@ namespace Tetris.MultiPlayer.Activities
 
                     SpriteBatch.DrawString(HeaderFont, playerText, new Vector2(boardWidth * p + (boardWidth - pSize.X) / 2, 24), Color.Black);
 
-                    //string keysText = board.PlayerInput.ToString();
-                    //var kSize = DefaultFont.MeasureString(keysText);
+                    string keysText = board.Title;
+                    var kSize = DefaultFont.MeasureString(keysText);
 
-                    //SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
+                    SpriteBatch.DrawString(DefaultFont, keysText, new Vector2(boardWidth * p + (boardWidth - kSize.X) / 2, 56), Color.Black);
 
                     p++;
                 }

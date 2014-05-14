@@ -19,7 +19,7 @@ namespace Tetris.MultiPlayer.Activities
             _session = session;
         }
 
-        protected async override Task RunActivity()
+        protected override async Task InitializePlayerBoards()
         {
             var players = _session.AllGamers.OfType<NetworkGamer>();
 
@@ -60,7 +60,7 @@ namespace Tetris.MultiPlayer.Activities
                     //randomizer clear queue, add infos
                 };*/
 
-                
+
 
                 var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
                 var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(channel.Host.Id));
@@ -71,8 +71,6 @@ namespace Tetris.MultiPlayer.Activities
                     new LocalTetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
                 };
             }
-
-            await base.RunActivity();
         }
     }
 }

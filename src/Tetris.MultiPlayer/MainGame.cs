@@ -56,8 +56,9 @@ namespace Tetris.MultiPlayer
                         case StartScreenActivity.Result.Exit:
                             return;
                         case StartScreenActivity.Result.Local:
-                            await activity.Run<GamePlayActivity>();
-                            break;
+                            throw new NotImplementedException();
+                            //await activity.Run<GamePlayActivity>();
+                            //break;
                         case StartScreenActivity.Result.WaitAsHost:
                         case StartScreenActivity.Result.WaitAsPlayer:
                             bool isHost = result == StartScreenActivity.Result.WaitAsHost;

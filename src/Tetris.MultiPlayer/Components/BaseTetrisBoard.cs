@@ -9,7 +9,8 @@ namespace Tetris.MultiPlayer.Components
 {
     abstract class BaseTetrisBoard
     {
-        bool _updating;
+        public string Title = string.Empty;
+
         AsyncContext _updateContext;
 
         Texture2D _squareSprite, _boardBackground;
@@ -39,8 +40,7 @@ namespace Tetris.MultiPlayer.Components
 
         public void Update(GameTime gameTime)
         {
-            if (!_updating)
-                _updateContext.Send(SyncUpdate, gameTime);
+            _updateContext.Send(SyncUpdate, gameTime);
         }
 
         protected abstract void SyncUpdate(GameTime gameTime);
