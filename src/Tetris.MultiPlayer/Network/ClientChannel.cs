@@ -6,74 +6,40 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Tetris.MultiPlayer.Components;
 using Tetris.MultiPlayer.Model;
 
 namespace Tetris.MultiPlayer.Network
 {
-    class ClientChannel
+    class ClientChannel: TetrisChannel
     {
-        public readonly NetworkSession Session;
-        public readonly LocalNetworkGamer Me;
         public readonly NetworkGamer Host;
 
         TaskCompletionSource<Piece[]> _getPieceRequest;
 
         public ClientChannel(NetworkSession session)
+            : base(session)
         {
             if (session.IsHost)
                 throw new InvalidOperationException();
-            Session = session;
-            Me = Session.LocalGamers[0];
-            Host = Session.AllGamers.FirstOrDefault((NetworkGamer g) => g.IsHost);
+
+            Host = Session.AllGamers.Single((NetworkGamer g) => g.IsHost);
         }
 
-        /*static T ByteArrayToStructure<T>(byte[] bytes) where T : struct
+        protected override void OnMessage(NetworkGamer sender, PacketReader reader)
         {
-            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-            T stuff = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(),
-                typeof(T));
-            handle.Free();
-            return stuff;
-        }*/
-
-        public async void Listen(CancellationToken cancellation)
-        {
-            while (!cancellation.IsCancellationRequested)
+            switch (reader.ReadChar())
             {
-                while (Me.IsDataAvailable)
-                {
-                    NetworkGamer requester;
-                    var reader = new PacketReader();
-                    Me.ReceiveData(reader, out requester);
-
-                    switch (reader.ReadChar())
+                case 'p':
+                    if (_getPieceRequest != null)
                     {
-                        case 'p':
-                            if (_getPieceRequest != null)
-                            {
-                                var pieceCount = (int)reader.ReadByte();
-                                var pieceIds = Enumerable.Range(0, pieceCount).Select(i => (int)reader.ReadByte()).ToArray();
+                        var pieceCount = (int)reader.ReadByte();
+                        var pieceIds = Enumerable.Range(0, pieceCount).Select(i => (int)reader.ReadByte()).ToArray();
 
-                                _getPieceRequest.TrySetResult(pieceIds.Select(i => Pieces.All[i]).ToArray());
-                                _getPieceRequest = null;
-                            }
-                            break;
-
-                        /*case 't':
-                            var buffer = new byte[Marshal.SizeOf(typeof(TetrisStateInfo))];
-                            reader.Read(buffer, 0, buffer.Length);
-                            var hostState = ByteArrayToStructure<TetrisStateInfo>(buffer);
-                            reader.Read(buffer, 0, buffer.Length);
-                            var localState = ByteArrayToStructure<TetrisStateInfo>(buffer);
-
-                            if (TetrisStateChanged != null)
-                                TetrisStateChanged(this, new TetrisStateEventArgs(hostState, localState));
-                            break;*/
+                        _getPieceRequest.TrySetResult(pieceIds.Select(i => Pieces.All[i]).ToArray());
+                        _getPieceRequest = null;
                     }
-                }
-
-                Session.Update();
-                await TaskEx.Delay(TimeSpan.FromMilliseconds(15));
+                    break;
             }
         }
 

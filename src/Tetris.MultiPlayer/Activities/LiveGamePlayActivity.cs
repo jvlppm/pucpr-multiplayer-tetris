@@ -13,10 +13,14 @@ namespace Tetris.MultiPlayer.Activities
     {
         NetworkSession _session;
 
+        LocalTetrisBoard _local;
+        RemoteTetrisBoard _remote;
+
         public NetworkGamePlayActivity(Game game, NetworkSession session)
             : base(game)
         {
             _session = session;
+            CancelOnExit.Register(session.Dispose);
         }
 
         protected override async Task InitializePlayerBoards()
@@ -28,48 +32,45 @@ namespace Tetris.MultiPlayer.Activities
 
             if (_session.IsHost)
             {
-                var playerIds = players.Where(i => !i.IsHost).Select(i => i.Id).ToArray();
-                var randomizer = new HostPieceRandomizer(playerIds);
-                var channel = new HostChannel(_session, randomizer);
-                channel.Listen(CancelOnExit);
+                var channel = new HostChannel(_session);
 
+                var getP1GameState = TetrisGameState.NewGameState(channel.HostGenerator);
+                var getP2GameState = TetrisGameState.NewGameState(channel.GetClientGenerator(0));
+
+                PlayerBoards = new List<BaseTetrisBoard>
+                {
+                    (_local = new LocalTetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = p1BoardLocation }),
+                    (_remote = new RemoteTetrisBoard(channel, channel.Clients[0].Id) { Location = p2BoardLocation })
+                };
+
+                channel.Listen(CancelOnExit);
+                _local.State = await getP1GameState;
+                _remote.State = await getP2GameState;
                 await channel.WaitClientReadyAsync();
 
-                var p1GameState = TetrisGameState.NewGameState(randomizer.HostGenerator);
-                var p2GameState = TetrisGameState.NewGameState(randomizer.RealClientGenerators[playerIds[0]]);
-
-                //server: p2 solidificou?
-                //        espera Xms, manda
-                //     client: recebeu solid, força solid, continua
-                //server: recebeu xy, seta, 
-
-                PlayerBoards = new List<LocalTetrisBoard>
-                {
-                    new LocalTetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
-                    new LocalTetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
-                };
+                _local.PreviewPieceMove += (s, e) => channel.NotifyPieceMoved(e);
+                _local.PreviewPieceSolidify += (s, e) => channel.NotifyPieceSolidified(e);
             }
             else
             {
                 var channel = new ClientChannel(_session);
-                channel.Listen(CancelOnExit);
                 var randomizer = new ClientPieceRandomizer(channel);
 
-                /*channel.TetrisStateChanged += (s, e) =>
+                var getP1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
+                var getP2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(channel.Host.Id));
+
+                PlayerBoards = new List<BaseTetrisBoard>
                 {
-                    //randomizer clear queue, add infos
-                };*/
-
-
-
-                var p1GameState = TetrisGameState.NewGameState(randomizer.GetGenerator());
-                var p2GameState = TetrisGameState.NewGameState(randomizer.GetGenerator(channel.Host.Id));
-
-                PlayerBoards = new List<LocalTetrisBoard>
-                {
-                    new LocalTetrisBoard(await p1GameState, new LocalPlayerInput()) { Location = p1BoardLocation },
-                    new LocalTetrisBoard(await p2GameState, new RemotePlayerInput()) { Location = p2BoardLocation }
+                    (_local = new LocalTetrisBoard(new PlayerInput(PlayerIndex.One)) { Location = p1BoardLocation }),
+                    (_remote = new RemoteTetrisBoard(channel, channel.Host.Id) { Location = p2BoardLocation })
                 };
+
+                channel.Listen(CancelOnExit);
+                _local.State = await getP1GameState;
+                _remote.State = await getP2GameState;
+
+                _local.PreviewPieceMove += (s, e) => channel.NotifyPieceMoved(e);
+                _local.PreviewPieceSolidify += (s, e) => channel.NotifyPieceSolidified(e);
             }
         }
     }

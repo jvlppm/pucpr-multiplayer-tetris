@@ -11,21 +11,15 @@ namespace Tetris.MultiPlayer.Components
     {
         public string Title = string.Empty;
 
-        AsyncContext _updateContext;
+        
 
         Texture2D _squareSprite, _boardBackground;
         SpriteFont _statsFont;
-        MutexAsync _updateMutex;
+        
 
         public Point Location;
 
         public TetrisGameState? State;
-
-        public BaseTetrisBoard()
-        {
-            _updateMutex = new MutexAsync();
-            _updateContext = new AsyncContext();
-        }
 
         public void LoadContent(ContentManager content)
         {
@@ -38,12 +32,7 @@ namespace Tetris.MultiPlayer.Components
 
         #region Update
 
-        public void Update(GameTime gameTime)
-        {
-            _updateContext.Send(SyncUpdate, gameTime);
-        }
-
-        protected abstract void SyncUpdate(GameTime gameTime);
+        public abstract void Update(GameTime gameTime);
         #endregion
 
         #region Draw

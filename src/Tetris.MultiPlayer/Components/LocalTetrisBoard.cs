@@ -8,56 +8,70 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tetris.MultiPlayer.Helpers;
 using Tetris.MultiPlayer.Model;
+using Tetris.MultiPlayer.Network;
 
 namespace Tetris.MultiPlayer.Components
 {
     class LocalTetrisBoard : BaseTetrisBoard
     {
+        MutexAsync _updateMutex;
+        AsyncContext _updateContext;
+
         TimeSpan CurrentTickTime;
         TimeSpan KeyTickTime;
         TimeSpan _gravityTickTimeCount;
         Dictionary<InputButton, TimeSpan> PressTime;
 
         bool _updating;
-        MutexAsync _updateMutex;
 
-        new TetrisGameState? State
+        new TetrisGameState State
         {
-            get { return base.State; }
+            get
+            {
+                if (base.State == null)
+                    throw new InvalidOperationException();
+                return base.State.Value;
+            }
             set
             {
-                if (value == null)
-                    throw new ArgumentNullException();
-
-                var oldRows = base.State == null? 0 : base.State.Value.Rows;
+                var oldRows = base.State == null ? 0 : base.State.Value.Rows;
                 base.State = value;
-                UpdateLevel(value.Value.Level + 1);
-
-                var clearedRows = value.Value.Rows - oldRows;
+                /*UpdateLevel(value.Level + 1);
+                var clearedRows = value.Rows - oldRows;
                 if (clearedRows > 0)
-                    FireLinesCleared(clearedRows);
+                    FireLinesCleared(clearedRows);*/
             }
         }
 
         public IPlayerInput PlayerInput;
         public event LinesClearedEventHandler LinesCleared;
+        public event PieceEventHandler PreviewPieceMove, PreviewPieceSolidify;
 
-        public LocalTetrisBoard(TetrisGameState state, IPlayerInput playerInput)
+        MovablePiece? _oldPieceState;
+
+        public LocalTetrisBoard(IPlayerInput playerInput)
         {
             PlayerInput = playerInput;
             PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
-            State = state;
+
+            _updateMutex = new MutexAsync();
+            _updateContext = new AsyncContext();
         }
 
         #region Update
 
-        protected override async void SyncUpdate(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
-            var currentState = State;
-            if (currentState == null)
-                return;
-            var state = currentState.Value;
+            _updateContext.Send(SyncUpdate, gameTime);
+            _updateContext.Update(gameTime);
+        }
 
+        protected async void SyncUpdate(GameTime gameTime)
+        {
+            if (_updating || base.State == null || base.State.Value.IsFinished)
+                return;
+
+            var state = State;
             _updating = true;
 
             using (await _updateMutex.WaitAsync())
@@ -81,11 +95,43 @@ namespace Tetris.MultiPlayer.Components
                 if (IsPressing(InputButton.RotateCCW))
                     State = state.RotateCounterClockwise();
 
+                if(_oldPieceState == null || !_oldPieceState.Equals(State.CurrentPiece))
+                {
+                    if (PreviewPieceMove != null)
+                    {
+                        PreviewPieceMove(this, new PieceEventArgs
+                        {
+                            PieceLocation = State.CurrentPiece.Position,
+                            PieceRotation = State.CurrentPiece.Rotation,
+                            PieceSequence = State.Sequence
+                        });
+                    }
+                    _oldPieceState = State.CurrentPiece;
+                }
+
                 if (_gravityTickTimeCount > CurrentTickTime || forceTick)
                 {
                     var oldRows = state.Rows;
-                    State = await state.Tick();
-                    var clearedRows = state.Rows - oldRows;
+                    TetrisGameState nextState;
+                    if (!state.TryToLowerPiece(out nextState))
+                    {
+                        if (PreviewPieceSolidify != null)
+                        {
+                            PreviewPieceSolidify(this, new PieceEventArgs
+                            {
+                                PieceLocation = state.CurrentPiece.Position,
+                                PieceRotation = state.CurrentPiece.Rotation,
+                                PieceSequence = state.Sequence
+                            });
+                        }
+
+                        //notify
+                        nextState = await state.SolidifyCurrentPiece();
+                    }
+
+                    State = nextState;
+
+                    var clearedRows = nextState.Rows - oldRows;
                     if (clearedRows > 0)
                         FireLinesCleared(clearedRows);
 
@@ -93,6 +139,8 @@ namespace Tetris.MultiPlayer.Components
                     if (_gravityTickTimeCount < TimeSpan.Zero)
                         _gravityTickTimeCount = TimeSpan.Zero;
                 }
+
+                UpdateLevel(State.Level);
             }
 
             _updating = false;

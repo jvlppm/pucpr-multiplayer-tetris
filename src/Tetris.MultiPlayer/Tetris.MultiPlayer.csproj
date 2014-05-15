@@ -87,6 +87,7 @@
     <Compile Include="Components\LinesClearedEvent.cs" />
     <Compile Include="Components\MenuInput.cs" />
     <Compile Include="Components\BaseTetrisBoard.cs" />
+    <Compile Include="Components\RemoteTetrisBoard.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Helpers\AsyncOperation.cs" />
     <Compile Include="Helpers\MutexAsync.cs" />
@@ -109,7 +110,7 @@
     <Compile Include="PieceRandomizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Components\TetrisBoard.cs" />
+    <Compile Include="Components\LocalTetrisBoard.cs" />
     <Compile Include="Model\TetrisGameState.cs" />
   </ItemGroup>
   <ItemGroup>

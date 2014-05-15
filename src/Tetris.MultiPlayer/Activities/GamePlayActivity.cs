@@ -48,13 +48,15 @@ namespace Tetris.MultiPlayer.Activities
 
         protected async override System.Threading.Tasks.Task RunActivity()
         {
-            
+            var init = InitializePlayerBoards();
 
             foreach (var board in PlayerBoards)
             {
                 board.LoadContent(Content);
                 //board.LinesCleared += LinesCleared;
             }
+
+            await init;
 
             Begin.Play();
             await base.RunActivity();

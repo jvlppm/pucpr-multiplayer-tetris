@@ -5,8 +5,11 @@ namespace Tetris.MultiPlayer.Network
 {
     class HostPieceRandomizer
     {
+        // Usada pelo host para visualizar o jogo
         public readonly IDictionary<byte, IPieceGenerator> RealClientGenerators;
+        // Usada para responder requisições
         public readonly IDictionary<byte, IPieceGenerator> RemoteClientGenerators;
+
         public readonly IPieceGenerator HostGenerator;
 
         public HostPieceRandomizer(byte[] clientIds)
