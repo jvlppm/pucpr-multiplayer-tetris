@@ -89,6 +89,9 @@ namespace Tetris.MultiPlayer.Network
 
         void Notify(char code, PieceEventArgs args, SendDataOptions options)
         {
+            if (Me.HasLeftSession)
+                return;
+
             var writer = new PacketWriter();
             writer.Write(code);
             writer.Write(args.PieceSequence);

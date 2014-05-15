@@ -48,6 +48,13 @@ namespace Tetris.MultiPlayer.Components
 
             channel.RemotePieceMoved += channel_RemotePieceMoved;
             channel.RemotePieceSolidified += channel_RemotePieceSolidified;
+            channel.Session.GamerLeft += Session_GamerLeft;
+        }
+
+        void Session_GamerLeft(object sender, GamerLeftEventArgs e)
+        {
+            if (e.Gamer.Id == PlayerId)
+                Title = "Player Left";
         }
 
         void channel_RemotePieceSolidified(object sender, PieceEventArgs args)
