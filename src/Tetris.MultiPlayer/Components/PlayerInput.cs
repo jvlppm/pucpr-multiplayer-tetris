@@ -91,14 +91,14 @@ namespace Tetris.MultiPlayer.Components
             var hDir = state.ThumbSticks.Left.X > 0 ? 1 : -1;
             var vDir = state.ThumbSticks.Left.Y > 0 ? 1 : -1;
 
-            var horAnalog = Math.Abs(state.ThumbSticks.Left.X) <= analogToDigital ? 0 : hDir;
+            //var horAnalog = Math.Abs(state.ThumbSticks.Left.X) <= analogToDigital ? 0 : hDir;
             var horDPad = (state.IsButtonDown(Buttons.DPadLeft) ? -1 : 0) + (state.IsButtonDown(Buttons.DPadRight) ? 1 : 0);
 
-            var verAnalog = Math.Abs(state.ThumbSticks.Left.Y) <= analogToDigital ? 0 : -vDir;
+            //var verAnalog = Math.Abs(state.ThumbSticks.Left.Y) <= analogToDigital ? 0 : -vDir;
             var verDPad = (state.IsButtonDown(Buttons.DPadUp) ? -1 : 0) + (state.IsButtonDown(Buttons.DPadDown) ? 1 : 0);
 
-            var horMove = MathHelper.Clamp(horAnalog + horDPad, -1, 1);
-            var verMove = MathHelper.Clamp(verAnalog + verDPad, -1, 1);
+            var horMove = MathHelper.Clamp(/*horAnalog + */horDPad, -1, 1);
+            var verMove = MathHelper.Clamp(/*verAnalog + */verDPad, -1, 1);
 
             return new Dictionary<InputButton, bool> {
               { InputButton.Left, horMove < 0 },

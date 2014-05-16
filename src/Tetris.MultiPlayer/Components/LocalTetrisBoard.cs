@@ -1,10 +1,6 @@
 ﻿using Jv.Games.Xna.Async.Core;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Tetris.MultiPlayer.Helpers;
 using Tetris.MultiPlayer.Model;
@@ -18,33 +14,11 @@ namespace Tetris.MultiPlayer.Components
         AsyncContext _updateContext;
 
         TimeSpan CurrentTickTime;
-        TimeSpan KeyTickTime;
         TimeSpan _gravityTickTimeCount;
-        Dictionary<InputButton, TimeSpan> PressTime;
 
         bool _updating;
 
-        new TetrisGameState State
-        {
-            get
-            {
-                if (base.State == null)
-                    throw new InvalidOperationException();
-                return base.State.Value;
-            }
-            set
-            {
-                var oldRows = base.State == null ? 0 : base.State.Value.Rows;
-                base.State = value;
-                /*UpdateLevel(value.Level + 1);
-                var clearedRows = value.Rows - oldRows;
-                if (clearedRows > 0)
-                    FireLinesCleared(clearedRows);*/
-            }
-        }
-
         public IPlayerInput PlayerInput;
-        public event LinesClearedEventHandler LinesCleared;
         public event PieceEventHandler PreviewPieceMove, PreviewPieceSolidify;
 
         MovablePiece? _oldPieceState;
@@ -52,7 +26,6 @@ namespace Tetris.MultiPlayer.Components
         public LocalTetrisBoard(IPlayerInput playerInput)
         {
             PlayerInput = playerInput;
-            PressTime = Enum.GetValues(typeof(InputButton)).OfType<InputButton>().ToDictionary(k => k, k => TimeSpan.Zero);
 
             _updateMutex = new MutexAsync();
             _updateContext = new AsyncContext();
@@ -68,78 +41,69 @@ namespace Tetris.MultiPlayer.Components
 
         protected async void SyncUpdate(GameTime gameTime)
         {
-            if (_updating || base.State == null || base.State.Value.IsFinished)
+            if (_updating || !HasState || State.IsFinished)
                 return;
 
-            var state = State;
             _updating = true;
 
             using (await _updateMutex.WaitAsync())
             {
                 _gravityTickTimeCount += gameTime.ElapsedGameTime;
 
-                bool forceTick = false;
-
                 PlayerInput.Update(gameTime);
-                foreach (var button in PressTime.Keys.ToArray())
-                    PressTime[button] += gameTime.ElapsedGameTime;
+
+                TetrisGameState nextState = State;
 
                 if (IsPressing(InputButton.Left))
-                    State = state.MoveLeft();
+                    nextState = nextState.MoveLeft();
                 if (IsPressing(InputButton.Right))
-                    State = state.MoveRight();
-                if (IsPressing(InputButton.Down))
-                    forceTick = true;
+                    nextState = nextState.MoveRight();
+                if (PlayerInput.IsPressed(InputButton.Down))
+                    _gravityTickTimeCount += TimeSpan.FromTicks(gameTime.ElapsedGameTime.Ticks * 4);
                 if (IsPressing(InputButton.RotateCW))
-                    State = state.RotateClockwise();
+                    nextState = nextState.RotateClockwise();
                 if (IsPressing(InputButton.RotateCCW))
-                    State = state.RotateCounterClockwise();
+                    nextState = nextState.RotateCounterClockwise();
 
-                if(_oldPieceState == null || !_oldPieceState.Equals(State.CurrentPiece))
+                if (_oldPieceState == null || !_oldPieceState.Equals(nextState.CurrentPiece))
                 {
                     if (PreviewPieceMove != null)
                     {
                         PreviewPieceMove(this, new PieceEventArgs
                         {
-                            PieceLocation = State.CurrentPiece.Position,
-                            PieceRotation = State.CurrentPiece.Rotation,
-                            PieceSequence = State.Sequence
+                            PieceLocation = nextState.CurrentPiece.Position,
+                            PieceRotation = nextState.CurrentPiece.Rotation,
+                            PieceSequence = nextState.Sequence
                         });
                     }
-                    _oldPieceState = State.CurrentPiece;
+                    _oldPieceState = nextState.CurrentPiece;
                 }
 
-                if (_gravityTickTimeCount > CurrentTickTime || forceTick)
+                if (_gravityTickTimeCount > CurrentTickTime)
                 {
-                    var oldRows = state.Rows;
-                    TetrisGameState nextState;
-                    if (!state.TryToLowerPiece(out nextState))
+                    TetrisGameState finalState;
+                    if (!nextState.TryToLowerPiece(out finalState))
                     {
                         if (PreviewPieceSolidify != null)
                         {
                             PreviewPieceSolidify(this, new PieceEventArgs
                             {
-                                PieceLocation = state.CurrentPiece.Position,
-                                PieceRotation = state.CurrentPiece.Rotation,
-                                PieceSequence = state.Sequence
+                                PieceLocation = nextState.CurrentPiece.Position,
+                                PieceRotation = nextState.CurrentPiece.Rotation,
+                                PieceSequence = nextState.Sequence
                             });
                         }
 
-                        //notify
-                        nextState = await state.SolidifyCurrentPiece();
+                        nextState = await nextState.SolidifyCurrentPiece();
                     }
-
-                    State = nextState;
-
-                    var clearedRows = nextState.Rows - oldRows;
-                    if (clearedRows > 0)
-                        FireLinesCleared(clearedRows);
+                    else nextState = finalState;
 
                     _gravityTickTimeCount -= CurrentTickTime;
                     if (_gravityTickTimeCount < TimeSpan.Zero)
                         _gravityTickTimeCount = TimeSpan.Zero;
                 }
 
+                State = nextState;
                 UpdateLevel(State.Level);
             }
 
@@ -150,33 +114,12 @@ namespace Tetris.MultiPlayer.Components
         {
             var tick = Math.Pow((0.8 - ((level - 1) * 0.007)), (level - 1));
             CurrentTickTime = TimeSpan.FromSeconds(tick);
-            KeyTickTime = TimeSpan.FromSeconds(tick / 5);
         }
         #endregion
 
         bool IsPressing(InputButton button)
         {
-            if (!PlayerInput.IsPressed(button))
-            {
-                PressTime[button] = TimeSpan.Zero;
-                return false;
-            }
-
-            if (!PlayerInput.WasPressed(button))
-                return true;
-
-            if (PressTime[button] > KeyTickTime)
-            {
-                PressTime[button] -= KeyTickTime;
-                return true;
-            }
-            return false;
-        }
-
-        void FireLinesCleared(int lines)
-        {
-            if (LinesCleared != null)
-                LinesCleared(this, new LinesClearedEventArgs(lines));
+            return PlayerInput.IsPressed(button) && !PlayerInput.WasPressed(button);
         }
 
         public async Task Invoke(Func<Task> asyncAction)

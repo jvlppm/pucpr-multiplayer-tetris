@@ -51,10 +51,7 @@ namespace Tetris.MultiPlayer.Activities
             var init = InitializePlayerBoards();
 
             foreach (var board in PlayerBoards)
-            {
                 board.LoadContent(Content);
-                //board.LinesCleared += LinesCleared;
-            }
 
             await init;
 
@@ -62,19 +59,6 @@ namespace Tetris.MultiPlayer.Activities
             await base.RunActivity();
             Return.Play();
         }
-
-        /*void LinesCleared(object sender, LinesClearedEventArgs e)
-        {
-            var board = (LocalTetrisBoard)sender;
-            if (e.Lines <= 1)
-                return;
-
-            foreach (var b in PlayerBoards)
-            {
-                if (b != board && !b.State.Value.IsFinished)
-                    b.State = b.State.Value.MoveLinesUp(e.Lines, Random.Next(10));
-            }
-        }*/
 
         // Valida vencedor, e atualiza boards
         protected override void Update(Microsoft.Xna.Framework.GameTime gameTime)
@@ -87,17 +71,17 @@ namespace Tetris.MultiPlayer.Activities
 
             if (Winner <= 0)
             {
-                if (PlayerBoards.All(b => b.State != null && b.State.Value.IsFinished))
+                if (PlayerBoards.All(b => b.HasState && b.State.IsFinished))
                 {
-                    var winner = PlayerBoards.OrderBy(b => b.State == null? 0 : b.State.Value.Points).LastOrDefault();
+                    var winner = PlayerBoards.OrderBy(b => !b.HasState? 0 : b.State.Points).LastOrDefault();
                     if (winner != null)
                         Winner = PlayerBoards.IndexOf(winner) + 1;
                 }
                 else
                 {
-                    var remaining = PlayerBoards.Where(b => b.State == null || !b.State.Value.IsFinished).ToArray();
+                    var remaining = PlayerBoards.Where(b => !b.HasState || !b.State.IsFinished).ToArray();
                     var last = remaining.Length == 1 ? remaining[0] : null;
-                    if (last != null && last.State != null && PlayerBoards.All(b => b == last || (b.State != null && b.State.Value.Points < last.State.Value.Points)))
+                    if (last != null && last.HasState && PlayerBoards.All(b => b == last || (b.HasState && b.State.Points < last.State.Points)))
                         Winner = PlayerBoards.IndexOf(last) + 1;
                 }
             }

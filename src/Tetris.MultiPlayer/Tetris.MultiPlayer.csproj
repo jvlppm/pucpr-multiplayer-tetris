@@ -80,6 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Activities\DialogActivity.cs" />
+    <Compile Include="Activities\LocalGamePlayActivity.cs" />
     <Compile Include="Activities\LiveGamePlayActivity.cs" />
     <Compile Include="Activities\GamePlayActivity.cs" />
     <Compile Include="Activities\LobbyActivity.cs" />

@@ -79,7 +79,7 @@ namespace Tetris.MultiPlayer.Activities
 
         async void CreateLocalLines(object sender, LinesClearedEventArgs e)
         {
-            if (_local.State.Value.IsFinished || e.Lines <= 1)
+            if (!_local.HasState || _local.State.IsFinished || e.Lines <= 1)
                 return;
 
             await _local.Invoke(async delegate
@@ -87,7 +87,7 @@ namespace Tetris.MultiPlayer.Activities
                 var random = new Random(Environment.TickCount);
                 var gapLocation = random.Next(10);
 
-                var state = _local.State.Value;
+                var state = _local.State;
 
                 _channel.NotifyLinesCreated(new LinesCreatedEventArgs
                 {

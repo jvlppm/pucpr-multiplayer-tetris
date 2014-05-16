@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using Tetris.MultiPlayer.Helpers;
 using Tetris.MultiPlayer.Model;
 
@@ -9,17 +10,38 @@ namespace Tetris.MultiPlayer.Components
 {
     abstract class BaseTetrisBoard
     {
-        public string Title = string.Empty;
-
-        
-
         Texture2D _squareSprite, _boardBackground;
         SpriteFont _statsFont;
-        
 
+        TetrisGameState? _state;
+
+        public string Title = string.Empty;
         public Point Location;
 
-        public TetrisGameState? State;
+        public event LinesClearedEventHandler LinesCleared;
+
+        public bool HasState
+        {
+            get { return _state != null; }
+        }
+
+        public TetrisGameState State
+        {
+            get
+            {
+                if (_state == null)
+                    throw new InvalidOperationException();
+                return _state.Value;
+            }
+            set
+            {
+                var oldRows = _state == null ? 0 : _state.Value.Rows;
+                _state = value;
+                var clearedRows = _state.Value.Rows - oldRows;
+                if (clearedRows > 0 && LinesCleared != null)
+                    LinesCleared(this, new LinesClearedEventArgs(clearedRows));
+            }
+        }
 
         public void LoadContent(ContentManager content)
         {

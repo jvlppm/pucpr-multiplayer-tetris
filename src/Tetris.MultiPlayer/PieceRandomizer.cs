@@ -37,7 +37,7 @@ namespace Tetris.MultiPlayer
             return new PieceGenerator(() => GetPiece(playerIndex));
         }
 
-        async Task<Piece> GetPiece(int playerIndex)
+        Task<Piece> GetPiece(int playerIndex)
         {
             if (playerIndex >= _playerPieces.Length)
                 throw new InvalidOperationException();
@@ -45,7 +45,7 @@ namespace Tetris.MultiPlayer
             if (_playerPieces[playerIndex].Count <= 0)
                 EnqueueNextPieces();
 
-            return _playerPieces[playerIndex].Dequeue();
+            return AsyncBridge.FromResult(_playerPieces[playerIndex].Dequeue());
         }
 
         void EnqueueNextPieces()

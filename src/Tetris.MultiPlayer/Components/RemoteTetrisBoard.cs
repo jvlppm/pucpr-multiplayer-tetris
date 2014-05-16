@@ -14,22 +14,9 @@ namespace Tetris.MultiPlayer.Components
         MutexAsync _updateMutex;
         AsyncContext _updateContext;
 
-        new TetrisGameState State
-        {
-            get
-            {
-                if (base.State == null)
-                    throw new InvalidOperationException();
-                return base.State.Value;
-            }
-            set { base.State = value; }
-        }
-
         int _lastPieceHeight;
         uint _currentPieceId;
         public readonly byte PlayerId;
-
-        public event LinesClearedEventHandler LinesCleared;
 
         public RemoteTetrisBoard(TetrisChannel channel, byte playerId)
         {
@@ -63,10 +50,6 @@ namespace Tetris.MultiPlayer.Components
                     var oldRows = State.Rows;
                     State = await nextState.MoveLinesUp(args.Count, args.GapLocation);
 
-                    var clearedRows = State.Rows - oldRows;
-                    if (clearedRows > 0 && LinesCleared != null)
-                        LinesCleared(this, new LinesClearedEventArgs(clearedRows));
-
                     _currentPieceId++;
                     _lastPieceHeight = 0;
                 }
@@ -95,12 +78,7 @@ namespace Tetris.MultiPlayer.Components
                     var updatedPieceLocation = new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation);
                     var nextState = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, updatedPieceLocation, State.NextPiece, State.Grid, State.Sequence);
 
-                    var oldRows = State.Rows;
                     State = await nextState.SolidifyCurrentPiece();
-
-                    var clearedRows = State.Rows - oldRows;
-                    if (clearedRows > 0 && LinesCleared != null)
-                        LinesCleared(this, new LinesClearedEventArgs(clearedRows));
 
                     _currentPieceId++;
                     _lastPieceHeight = 0;
