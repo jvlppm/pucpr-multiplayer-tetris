@@ -15,7 +15,6 @@ namespace Tetris.MultiPlayer.Components
         AsyncContext _updateContext;
 
         int _lastPieceHeight;
-        uint _currentPieceId;
         public readonly byte PlayerId;
 
         public RemoteTetrisBoard(TetrisChannel channel, byte playerId)
@@ -41,16 +40,12 @@ namespace Tetris.MultiPlayer.Components
             {
                 using (var disp = await mutexWait)
                 {
-                    if (_currentPieceId != args.PieceSequence)
-                        throw new NotImplementedException();
-
                     var updatedPieceLocation = new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation);
                     var nextState = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, updatedPieceLocation, State.NextPiece, State.Grid, State.Sequence);
 
                     var oldRows = State.Rows;
                     State = await nextState.MoveLinesUp(args.Count, args.GapLocation);
 
-                    _currentPieceId++;
                     _lastPieceHeight = 0;
                 }
             });
@@ -72,15 +67,19 @@ namespace Tetris.MultiPlayer.Components
             {
                 using (var disp = await mutexWait)
                 {
-                    if (_currentPieceId != args.PieceSequence)
-                        throw new NotImplementedException();
+                    if (args.PieceSequence < State.Sequence)
+                        return;
+
+                    while (args.PieceSequence > State.Sequence)
+                    {
+                        var currentPiece = new MovablePiece(State.NextPiece, args.PieceRotation, args.PieceLocation);
+                        State = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, currentPiece, await State.PieceGenerator.GetPiece(), State.Grid, State.Sequence + 1);
+                    }
 
                     var updatedPieceLocation = new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation);
                     var nextState = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, updatedPieceLocation, State.NextPiece, State.Grid, State.Sequence);
 
                     State = await nextState.SolidifyCurrentPiece();
-
-                    _currentPieceId++;
                     _lastPieceHeight = 0;
                 }
             });
@@ -96,7 +95,7 @@ namespace Tetris.MultiPlayer.Components
             {
                 using (var disp = await mutexWait)
                 {
-                    if (_currentPieceId != args.PieceSequence || args.PieceLocation.Y < _lastPieceHeight)
+                    if (State.Sequence != args.PieceSequence || args.PieceLocation.Y < _lastPieceHeight)
                         return;
 
                     _lastPieceHeight = args.PieceLocation.Y;

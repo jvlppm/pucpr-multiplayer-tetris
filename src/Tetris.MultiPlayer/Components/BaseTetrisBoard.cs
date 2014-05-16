@@ -62,17 +62,16 @@ namespace Tetris.MultiPlayer.Components
         {
             spriteBatch.Draw(_boardBackground, new Vector2(Location.X, Location.Y), Color.White);
 
-            TetrisGameState? state = State;
-            if (state == null)
+            if (!HasState)
                 return;
 
             var gridOffset = new Vector2(1, 1);
 
-            DrawCurrentPiece(state.Value, spriteBatch, gridOffset);
-            DrawGrid(state.Value, spriteBatch, gridOffset);
+            DrawCurrentPiece(State, spriteBatch, gridOffset);
+            DrawGrid(State, spriteBatch, gridOffset);
 
-            DrawNextPiece(state.Value, spriteBatch);
-            DrawInfo(state.Value, spriteBatch);
+            DrawNextPiece(State, spriteBatch);
+            DrawInfo(State, spriteBatch);
         }
 
         void DrawCurrentPiece(TetrisGameState state, SpriteBatch spriteBatch, Vector2 position)

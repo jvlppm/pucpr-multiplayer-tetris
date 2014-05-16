@@ -99,8 +99,6 @@
     <Compile Include="Network\Extensions.cs" />
     <Compile Include="Network\HostChannel.cs" />
     <Compile Include="Network\HostPieceRandomizer.cs" />
-    <Compile Include="Network\RemotePlayerInput.cs" />
-    <Compile Include="Network\LocalPlayerInput.cs" />
     <Compile Include="MainGame.cs" />
     <Compile Include="Model\MovablePiece.cs" />
     <Compile Include="Model\Piece.cs" />
