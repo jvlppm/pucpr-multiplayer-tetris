@@ -20,6 +20,14 @@ namespace Tetris.MultiPlayer.Network
 
     delegate void PieceEventHandler(object sender, PieceEventArgs args);
 
+    class LinesCreatedEventArgs : PieceEventArgs
+    {
+        public int Count;
+        public int GapLocation;
+    }
+
+    delegate void LinesCreatedEventHandler(object sender, LinesCreatedEventArgs args);
+
     abstract class TetrisChannel
     {
         public readonly NetworkSession Session;
@@ -27,6 +35,7 @@ namespace Tetris.MultiPlayer.Network
 
         public event PieceEventHandler RemotePieceMoved;
         public event PieceEventHandler RemotePieceSolidified;
+        public event LinesCreatedEventHandler RemoteLinesCreated;
 
         public TetrisChannel(NetworkSession session)
         {
@@ -50,10 +59,29 @@ namespace Tetris.MultiPlayer.Network
 
                     switch (messageType)
                     {
+                        case 'K':
+                            reader.ReadChar();
+
+                            if (RemoteLinesCreated != null)
+                            {
+                                RemoteLinesCreated(this, new LinesCreatedEventArgs
+                                {
+                                    Player = requester,
+                                    PieceSequence = reader.ReadUInt32(),
+                                    PieceRotation = reader.ReadInt32(),
+                                    PieceLocation = new Point(reader.ReadInt32(), reader.ReadInt32()),
+
+                                    Count = reader.ReadByte(),
+                                    GapLocation = reader.ReadByte()
+                                });
+                            }
+                            break;
+
                         case 'M':
                         case 'S':
                             reader.ReadChar();
-                            var args = new PieceEventArgs {
+                            var args = new PieceEventArgs
+                            {
                                 Player = requester,
                                 PieceSequence = reader.ReadUInt32(),
                                 PieceRotation = reader.ReadInt32(),
@@ -100,6 +128,24 @@ namespace Tetris.MultiPlayer.Network
             writer.Write(args.PieceLocation.Y);
             Me.SendData(writer, options);
         }
+
+        public void NotifyLinesCreated(LinesCreatedEventArgs args)
+        {
+            if (Me.HasLeftSession)
+                return;
+
+            var writer = new PacketWriter();
+            writer.Write('K');
+
+            writer.Write(args.PieceSequence);
+            writer.Write(args.PieceRotation);
+            writer.Write(args.PieceLocation.X);
+            writer.Write(args.PieceLocation.Y);
+
+            writer.Write((byte)args.Count);
+            writer.Write((byte)args.GapLocation);
+            Me.SendData(writer, SendDataOptions.ReliableInOrder);
+        }
     }
 
     class HostChannel : TetrisChannel
@@ -140,7 +186,7 @@ namespace Tetris.MultiPlayer.Network
 
         protected override void OnMessage(NetworkGamer sender, PacketReader reader)
         {
-            switch(reader.ReadChar())
+            switch (reader.ReadChar())
             {
                 // Cliente solicitou peças
                 case 'P':

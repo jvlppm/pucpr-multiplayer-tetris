@@ -178,10 +178,11 @@ namespace Tetris.MultiPlayer.Components
             if (LinesCleared != null)
                 LinesCleared(this, new LinesClearedEventArgs(lines));
         }
-        /*public async void MoveLinesUp(int count)
+
+        public async Task Invoke(Func<Task> asyncAction)
         {
             using (await _updateMutex.WaitAsync())
-                State = await State.MoveLinesUp(count, new Random(Environment.TickCount).Next(0, 10));
-        }*/
+                await asyncAction();
+        }
     }
 }

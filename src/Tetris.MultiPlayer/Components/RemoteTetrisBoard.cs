@@ -22,22 +22,14 @@ namespace Tetris.MultiPlayer.Components
                     throw new InvalidOperationException();
                 return base.State.Value;
             }
-            set
-            {
-                var oldRows = base.State == null ? 0 : base.State.Value.Rows;
-                base.State = value;
-                /*UpdateLevel(value.Level + 1);
-                var clearedRows = value.Rows - oldRows;
-                if (clearedRows > 0)
-                    FireLinesCleared(clearedRows);*/
-            }
+            set { base.State = value; }
         }
 
         int _lastPieceHeight;
         uint _currentPieceId;
         public readonly byte PlayerId;
 
-        //public event LinesClearedEventHandler LinesCleared;
+        public event LinesClearedEventHandler LinesCleared;
 
         public RemoteTetrisBoard(TetrisChannel channel, byte playerId)
         {
@@ -46,9 +38,39 @@ namespace Tetris.MultiPlayer.Components
             _updateMutex = new MutexAsync();
             _updateContext = new AsyncContext();
 
+            channel.RemoteLinesCreated += channel_RemoteLinesCreated;
             channel.RemotePieceMoved += channel_RemotePieceMoved;
             channel.RemotePieceSolidified += channel_RemotePieceSolidified;
             channel.Session.GamerLeft += Session_GamerLeft;
+        }
+
+        void channel_RemoteLinesCreated(object sender, LinesCreatedEventArgs args)
+        {
+            if (PlayerId != args.Player.Id)
+                return;
+
+            var mutexWait = _updateMutex.WaitAsync();
+            _updateContext.Post((Action)async delegate
+            {
+                using (var disp = await mutexWait)
+                {
+                    if (_currentPieceId != args.PieceSequence)
+                        throw new NotImplementedException();
+
+                    var updatedPieceLocation = new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation);
+                    var nextState = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, updatedPieceLocation, State.NextPiece, State.Grid, State.Sequence);
+
+                    var oldRows = State.Rows;
+                    State = await nextState.MoveLinesUp(args.Count, args.GapLocation);
+
+                    var clearedRows = State.Rows - oldRows;
+                    if (clearedRows > 0 && LinesCleared != null)
+                        LinesCleared(this, new LinesClearedEventArgs(clearedRows));
+
+                    _currentPieceId++;
+                    _lastPieceHeight = 0;
+                }
+            });
         }
 
         void Session_GamerLeft(object sender, GamerLeftEventArgs e)
@@ -70,11 +92,16 @@ namespace Tetris.MultiPlayer.Components
                     if (_currentPieceId != args.PieceSequence)
                         throw new NotImplementedException();
 
-                    TetrisGameState nextState;
-                    if (!State.TrySetCurrentPiece(new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation), out nextState))
-                        throw new NotImplementedException();
+                    var updatedPieceLocation = new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation);
+                    var nextState = new TetrisGameState(State.PieceGenerator, State.Rows, State.Points, updatedPieceLocation, State.NextPiece, State.Grid, State.Sequence);
 
+                    var oldRows = State.Rows;
                     State = await nextState.SolidifyCurrentPiece();
+
+                    var clearedRows = State.Rows - oldRows;
+                    if (clearedRows > 0 && LinesCleared != null)
+                        LinesCleared(this, new LinesClearedEventArgs(clearedRows));
+
                     _currentPieceId++;
                     _lastPieceHeight = 0;
                 }
@@ -98,7 +125,8 @@ namespace Tetris.MultiPlayer.Components
 
                     TetrisGameState nextState;
                     if (!State.TrySetCurrentPiece(new MovablePiece(State.CurrentPiece.Piece, args.PieceRotation, args.PieceLocation), out nextState))
-                        throw new NotImplementedException();
+                        Title = "Out of sync";
+                    else Title = string.Empty;
 
                     State = nextState;
                 }
